@@ -17,6 +17,9 @@ begin
 	plot!(x, wrapped_phase, label="Wrapped Phase", lw=4, color=:red, fontsize=14, labelfont=14, legendfont=14, tickfont=14, xguidefontsize=14, yguidefontsize=14, grid=false, title="Unwrapped vs Wrapped Phases")
 end
 
+# ╔═╡ 5ff814bb-706c-4266-9aa5-cc5fe7486a5f
+using StatsBase
+
 # ╔═╡ 3b71e1f0-0c4a-11f1-0aa6-43a57fc47120
 md"""
 # **Data-driven analysis of seismic phase using circular statistics**
@@ -131,6 +134,16 @@ A key advantage of circular statistics is that these quantities—the circular m
 Table 1 summarizes the principal attributes used in this study. While the circular mean, resultant length, and variance apply to any angular distribution, the concentration parameter κ is specific to the von Mises distribution. Because κ can be estimated directly from ``\bar{R}``, it serves as a useful derived metric when a von Mises model is appropriate. This relationship becomes central in the next section.
 """
 
+# ╔═╡ d4af8fc2-e90a-4e63-9294-a40498d9a7c6
+md"""
+| **Attribute** | **Symbol** | **Range** | **Interpretation** |
+|:---|:---:|:---:|:---|
+| Circular mean | ``\bar{\theta}`` | ``[-\pi, \pi]`` | Central phase direction |
+| Mean resultant length | ``\bar{R}`` | ``[0, 1]`` | Degree of phase alignment (clustering strength) |
+| Circular variance | ``V = 1 - \bar{R}`` | ``[0, 1]`` | Phase dispersion or incoherence |
+| Concentration (von Mises) | ``\kappa`` | ``[0, \infty)`` | Inverse dispersion (analogous to S/N in phase space) |
+"""
+
 # ╔═╡ e3214f03-f2a4-4961-8a19-8972e55d58ba
 md"""
 # **Modeling phase distributions with von Mises: The circular Gaussian**
@@ -165,6 +178,25 @@ Importantly, ``\kappa`` can be estimated from ``\bar{R}`` using the following ap
 \end{cases}
 ```
 
+"""
+
+# ╔═╡ 24e2c578-835b-475d-8947-709d9fa65677
+function wrap_phase(unwrapped_phase)
+    return mod.(unwrapped_phase .+ π, 2π) .- π
+end
+
+# ╔═╡ 2b06eb0b-51f2-45e3-af2e-6558a70d9bac
+begin
+	using Distributions, CircStats
+
+	kappa_values = 0.001:0.1:20
+	circ_var_values = map(κ -> 1.0 - circ_r(wrap_phase.(rand(VonMises(0.0, κ), 100_001))), kappa_values)
+
+	plot(kappa_values, circ_var_values, xlabel="κ", ylabel="Circular Variance", title="Circular Variance vs. κ", legend=false, linewidth=4, color=:black, grid=false, tickfontsize=12, xguidefontsize=14, yguidefontsize=14, titlefontsize=16, dpi=600, size=(700, 450))
+end
+
+# ╔═╡ efd83afd-bde3-4377-a1fb-f84a55307435
+md"""
 In short, low variance (``V`` close to 0) corresponds to high concentration (large ``\kappa``), indicating tightly clustered, coherent phases. High variance (``V`` near 1) implies low concentration (small ``\kappa``), as in a uniform phase distribution. This relationship is visualized in Figure 5.
 
 Theoretically, if phase unwrapping were reliably possible, one could fit a traditional Gaussian to the unwrapped phases and estimate standard deviation ``\sigma`` in radians or degrees, giving familiar uncertainty metrics. Bakulin et al. (2024) derived numerical correspondences between ``\kappa`` and ``\sigma`` for such cases. However, unwrapping is rarely feasible or stable for noisy seismic data in practice.
@@ -176,23 +208,130 @@ Nonetheless, when the von Mises model is assumed, ``V`` and ``\kappa`` are tight
 In short, the von Mises distribution gives us more than a fit — it offers a framework. It allows us to interpret phase coherence, model uncertainty, and detect reliable signal content across frequencies. With this model in hand, we are now ready to return to our earlier examples, this time through the lens of circular statistics, and see what was hidden in plain sight.
 """
 
-# ╔═╡ 7d945d56-e268-43de-89a8-7bbf84dbb62d
-
-
-# ╔═╡ f8905a86-daab-4893-b82a-7c5c2c4c4090
-function wrap_phase(unwrapped_phase)
-    return mod.(unwrapped_phase .+ π, 2π) .- π
+# ╔═╡ 05fd2bdc-299a-4470-baff-e9f60887bb1d
+function variance_to_kappa(V::Real)
+    R = 1 - V
+    if R < 1e-8
+        return 0.0
+    elseif R < 0.53
+        return 2R + R^3 + (5R^5)/6
+    elseif R < 0.85
+        return -0.4 + 1.39R + 0.43/(1 - R)
+    else
+        return 1 / (R^3 - 4R^2 + 3R)
+    end
 end
 
-# ╔═╡ 64c6aba3-6609-44c6-baa2-74cd458c7303
+# ╔═╡ 4977c317-74cc-43ef-9f4b-ccbafbbc0496
+function add_circle_axes!(p; r=1.0)
+    tt = range(0, 2π; length=361)
+    plot!(p, r*cos.(tt), r*sin.(tt), lc=:black, lw=3, label=false)
+    plot!(p, [-r, r], [0, 0], lc=:black, lw=3, label=false)
+    plot!(p, [0, 0], [-r, r], lc=:black, lw=3, label=false)
+    return p
+end
+
+# ╔═╡ 99e07135-36d9-4820-bb89-29a4194715f6
+function plot_vectors(θ; step=5, col=:lightgreen, ttl="")
+	xs, ys = cos.(θ), sin.(θ)
+	R_bar = circ_r(θ)
+	mean_dir, = circ_mean(θ)
+	R_bar_vector = (R_bar*cos(mean_dir), R_bar*sin(mean_dir))
+	idx = 1:step:length(xs)
+
+	p = quiver(zeros(length(idx)), zeros(length(idx)); quiver=(xs[idx], ys[idx]), aspect_ratio=1, legend=false, grid=false, xlims=(-1.1,1.1), ylims=(-1.1,1.1), arrow=true, lw=1, linecolor=col, axis=false, title=ttl)
+
+	add_circle_axes!(p)
+	annotate!(p, [(1.05, 0.00, text("0", 14)), (-1.08, 0.00, text("-π,\n π", 14, :center)), (0.00, 1.08, text("π/2", 14, :center)), (0.00, -1.10, text("-π/2", 14, :center))])
+
+	quiver!(p, [0.0], [0.0]; quiver=([R_bar_vector[1]], [R_bar_vector[2]]), arrow=true, lw=6, linecolor=:green, label=false)
+	return p
+end
+
+# ╔═╡ 21204036-213c-4a95-afed-b9e861238584
+function c_hist(θ; nbins=30, colR=:green, ttl="")
+
+    # Histogram edges on [-π, π]
+    edges = range(-π, π; length=nbins+1)
+    h = fit(Histogram, θ, edges)
+
+    counts  = h.weights
+    centers = (edges[1:end-1] .+ edges[2:end]) ./ 2
+    widths  = diff(edges)
+
+    # Normalize radii 
+    maxc = maximum(counts)
+    r = maxc > 0 ? counts ./ maxc : zeros(length(counts))
+    
+    # Base plot
+    p = plot(aspect_ratio=1, legend=false, grid=false,
+             xlims=(-1.1, 1.1), ylims=(-1.1, 1.1),
+             title=ttl, axis=false)
+
+    for (c, w, rr) in zip(centers, widths, r)
+        t1 = c - w/2
+        t2 = c + w/2
+        tseg = range(t1, t2; length=12)
+
+        x = vcat(0.0, rr*cos.(tseg), 0.0)
+        y = vcat(0.0, rr*sin.(tseg), 0.0)
+
+        plot!(p, x, y, seriestype=:shape, fc=:white, lc=:black, lw=1, label=false)
+    end
+
+    add_circle_axes!(p)
+
+    annotate!(p, [(1.05, 0.00, text("0", 14)), (-1.08, 0.00, text("-π,\n π", 14, :center)), (0.00, 1.08, text("π/2", 14, :center)), (0.00, -1.10, text("-π/2", 14, :center))])
+    
+    R_bar = circ_r(θ)
+	mean_dir, = circ_mean(θ)
+	R_bar_vector = (R_bar*cos(mean_dir), R_bar*sin(mean_dir))
+    # Resultant vector overlay
+    quiver!(p, [0.0], [0.0]; quiver=([R_bar_vector[1]], [R_bar_vector[2]]), arrow=true, lw=6, linecolor=:green, label=false)
+
+    return p
+end
+
+# ╔═╡ 3431bac7-0053-4597-977c-a3373bb07803
 begin
-	using Distributions, CircStats
-
-	kappa_values = 0.001:0.1:20
-	circ_var_values = map(κ -> 1.0 - circ_r(wrap_phase.(rand(VonMises(0.0, κ), 100_001))), kappa_values)
-
-	plot(kappa_values, circ_var_values, xlabel="κ", ylabel="Circular Variance", title="Circular Variance vs. κ", legend=false, linewidth=4, color=:black, grid=false, tickfontsize=12, xguidefontsize=14, yguidefontsize=14, titlefontsize=16, dpi=600, size=(700, 450))
+	V1, V2 = 0.8, 0.1
+	κ1, κ2 = variance_to_kappa(V1), variance_to_kappa(V2)
+	R1 = 1-V1
+	R2 = 1-V2
+	
+	d1, d2 = VonMises(0.0, κ1), VonMises(0.0, κ2)
+	phase1 = rand(d1, 1000)
+	phase2 = rand(d2, 1000)
 end
+
+# ╔═╡ 211309dc-b246-4182-ab11-d34a52321b5d
+begin
+	va = plot_vectors(phase1; ttl="R̄=$(round(R1,digits=2)), V=$V1")
+	vb = plot_vectors(phase2; ttl="R̄=$(round(R2,digits=2)), V=$V2")
+	ca = c_hist(phase1; nbins=30, ttl="R̄=$(round(R1,digits=2)), V=$V1")
+	cb = c_hist(phase2; nbins=30, ttl="R̄=$(round(R2,digits=2)), V=$V2")
+
+	plot(va, vb, ca, cb, layout=(2,2), size=(900,900))
+end
+
+# ╔═╡ e98e9a2d-aefe-4033-a6b6-17cfad1bdf6e
+md"""
+# **Application of circular statistics to the additive white noise example**
+"""
+
+# ╔═╡ 0169b5c9-0ae6-414a-9442-51b79a05b6ff
+md"""
+Figures 1c–1h and 1k–1p apply circular statistics to the synthetic additive white noise example, accumulating phase ensembles from 1000 traces and analyzing them frequency by frequency. The circular mean aligns precisely with the true signal phase, and the observed distributions fit well with the von Mises model (equation 5).
+
+Traditional linear histograms (Figures 1c–1d) fail to capture true phase behavior. The apparent bimodality at 60 Hz (Figure 1d) is an artifact of linear representation, not a physical phenomenon — seismic phase is fundamentally circular and bounded within ``[-\pi, \pi]``.
+
+Rose diagrams (Figures 1g–1h, 1o–1p) resolve this ambiguity: what appeared bimodal on a line forms a single coherent cluster around the true phase direction. Each unit vector represents a trace's phase at a given frequency; their average direction robustly estimates the dominant phase with no unwrapping or modeling required.
+
+As expected from white noise, variance (``\kappa`` or ``V``) remains constant across frequencies — only the signal phase itself rotates naturally. Circular statistics thus reveal structure and coherence that traditional methods obscure.
+"""
+
+# ╔═╡ 86886228-9e3a-4854-ae95-d5a0bf0442b7
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -200,11 +339,13 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CircStats = "2f6764a1-d620-4564-9394-76eb7c776766"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
 CircStats = "~1.0.4"
 Distributions = "~0.25.120"
 Plots = "~1.41.4"
+StatsBase = "~0.34.10"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -213,7 +354,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "2a3923b16e265ce19c844cfa58bdddfcdaeef4d7"
+project_hash = "ba16a42df613c4e030ccfd7723d4f305038bcb81"
 
 [[deps.Accessors]]
 deps = ["CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "MacroTools"]
@@ -1514,10 +1655,21 @@ version = "1.13.0+0"
 # ╠═7c4adbf2-309d-44ed-9206-6d4c1470b635
 # ╟─ff4898a3-41dd-4933-8c33-a34e569bb36b
 # ╟─4e7f871c-4850-4960-afdb-6160d07c04e2
+# ╟─d4af8fc2-e90a-4e63-9294-a40498d9a7c6
 # ╟─e3214f03-f2a4-4961-8a19-8972e55d58ba
 # ╟─05619bbf-9e1b-4955-a7e6-2e849a0932d4
-# ╠═7d945d56-e268-43de-89a8-7bbf84dbb62d
-# ╠═f8905a86-daab-4893-b82a-7c5c2c4c4090
-# ╠═64c6aba3-6609-44c6-baa2-74cd458c7303
+# ╠═24e2c578-835b-475d-8947-709d9fa65677
+# ╠═2b06eb0b-51f2-45e3-af2e-6558a70d9bac
+# ╟─efd83afd-bde3-4377-a1fb-f84a55307435
+# ╠═05fd2bdc-299a-4470-baff-e9f60887bb1d
+# ╠═4977c317-74cc-43ef-9f4b-ccbafbbc0496
+# ╠═99e07135-36d9-4820-bb89-29a4194715f6
+# ╠═21204036-213c-4a95-afed-b9e861238584
+# ╠═3431bac7-0053-4597-977c-a3373bb07803
+# ╠═5ff814bb-706c-4266-9aa5-cc5fe7486a5f
+# ╠═211309dc-b246-4182-ab11-d34a52321b5d
+# ╟─e98e9a2d-aefe-4033-a6b6-17cfad1bdf6e
+# ╟─0169b5c9-0ae6-414a-9442-51b79a05b6ff
+# ╠═86886228-9e3a-4854-ae95-d5a0bf0442b7
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
