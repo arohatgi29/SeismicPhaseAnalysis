@@ -17,7 +17,7 @@ This repository provides algorithms and workflows for:
 
 The toolkit is intended for research, acquisition QC, advanced processing, and development of new phase-based seismic attributes.
 
-## Papers & Publications
+## Publications
 
 ### Journal Articles
 
