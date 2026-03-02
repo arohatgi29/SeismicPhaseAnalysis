@@ -17,98 +17,58 @@ This repository provides algorithms and workflows for:
 
 The toolkit is intended for research, acquisition QC, advanced processing, and development of new phase-based seismic attributes.
 
----
-
-## Key Features
-
-### Phase Analysis
-
-- Instantaneous phase computation  
-- Spectral phase estimation via FFT  
-- Wrapped phase handling (−π to π)  
-- Optional phase unwrapping  
-- Trace-dependent phase characterization  
-
-### Circular Statistics
-
-Phase is treated as a circular variable:
-
-- Circular mean  
-- Mean resultant length  
-- Circular variance  
-- von Mises concentration parameter (κ) estimation  
-- Phase clustering and dispersion analysis  
-
-### Phase QC Metrics
-
-- Phase variability across traces  
-- Frequency-dependent stability  
-- Offset-dependent behavior  
-- Noise-cone analysis  
-- Comparison of raw vs processed data  
-
-### Phase Masking & Stabilization
-
-- Local reference phase estimation  
-- Neighborhood circular averaging  
-- Frequency-domain masking  
-- Amplitude-preserving corrections  
-- Coherence improvement without kinematic distortion  
-
-### Visualization Tools
-
-- Phase maps on acquisition geometry  
-- Offset-domain displays  
-- Frequency-dependent plots  
-- Wiggle / variable-area seismic sections  
-- Circular histograms and rose diagrams  
-
----
-
 ## Papers & Publications
 
-### Journal Article
+### Journal Articles
 
-- Rohatgi, A., Bakulin, A., Peterson, A. and Fomel, S., 2026,  
-  **Reducing waveform variability in prestack seismic data using circular-statistics based phase masking**:  
-  *Geophysics*, under preparation.
-  
-- Rohatgi, A., Bakulin, A., and Fomel, S., 2026,  
-  **Phase variance as a seismic quality-control attribute**:  
-  *Geophysics*, submitted.
+- **Rohatgi, A., Bakulin, A., Peterson, A., and Fomel, S. (2026).**  
+  *Reducing waveform variability in prestack seismic data using circular-statistics-based phase masking.*  
+  Geophysics, in preparation.
 
-- Rohatgi, A., Bakulin, A., and Fomel, S., 2025,  
-  **Data-driven analysis of seismic phase using circular statistics**:  
-  *The Leading Edge*, 44(9), 683–691.
+- **Rohatgi, A., Bakulin, A., and Fomel, S. (2026).**  
+  *Phase variance as a seismic quality-control attribute.*  
+  Geophysics, submitted.  
+  Preprint: https://arxiv.org/abs/2602.23585
+
+- **Rohatgi, A., Bakulin, A., and Fomel, S. (2025).**  
+  *Data-driven analysis of seismic phase using circular statistics.*  
+  The Leading Edge, 44(9), 683–691.  
+  https://pubs.geoscienceworld.org/seg/tle/article/44/9/683/660917/Data-driven-analysis-of-seismic-phase-using
 
 ---
 
 ### Conference Papers & Expanded Abstracts
 
-- Bakulin, A., Rohatgi, A., and Fomel, S., 2026,  
-  **Taming Seismic Phase: From Statistical Characterization to Objective Phase Masking**:  
+- **Bakulin, A., Rohatgi, A., and Fomel, S. (2026).**  
+  *Taming seismic phase: From statistical characterization to objective phase masking.*  
   87th EAGE Annual Conference & Exhibition, 1–5.
 
-- Rohatgi, A., Bakulin, A., and Fomel, S., 2025,  
-  **Seismic phase spectral analysis: Field-data insights from circular statistics**:  
-  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 44.
+- **Rohatgi, A., Bakulin, A., and Fomel, S. (2025).**  
+  *Seismic phase spectral analysis: Field-data insights from circular statistics.*  
+  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 44.  
+  https://pubs.geoscienceworld.org/segeab/proceedings/SEGEAB.44/1/2522/725071
 
-- Rohatgi, A., Bakulin, A., and Fomel, S., 2025,  
-  **Theory of seismic phase analysis using circular statistics**:  
-  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 44.
+- **Rohatgi, A., Bakulin, A., and Fomel, S. (2025).**  
+  *Theory of seismic phase analysis using circular statistics.*  
+  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 44.  
+  https://pubs.geoscienceworld.org/segeab/proceedings/SEGEAB.44/1/2230/725011
 
-- Rohatgi, A., Bakulin, A., Fomel, S., and Badger, J., 2025,  
-  **Impact of near-surface topography on reflection distortions: From diffractions to speckle noise**:  
-  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 44.
+- **Rohatgi, A., Bakulin, A., Fomel, S., and Badger, J. (2025).**  
+  *Impact of near-surface topography on reflection distortions: From diffractions to speckle noise.*  
+  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 44.  
+  https://pubs.geoscienceworld.org/segeab/proceedings/SEGEAB.44/1/1692/725465
 
-- Bakulin, A., Rohatgi, A., and Fomel, S., 2025,  
-  **Statistical analysis of seismic phase variability in dense data**:  
-  86th EAGE Annual Conference & Exhibition, 1–5.
+- **Bakulin, A., Rohatgi, A., and Fomel, S. (2025).**  
+  *Statistical analysis of seismic phase variability in dense data.*  
+  86th EAGE Annual Conference & Exhibition, 1–5.  
+  https://www.earthdoc.org/content/papers/10.3997/2214-4609.2025101166
 
-- Rohatgi, A., Bakulin, A., and Fomel, S., 2024,  
-  **Analyzing the impact of additive and multiplicative noise on seismic data analysis**:  
-  SEG International Exposition and Annual Meeting, Expanded Abstracts, SEG-2024-4086176.
+- **Rohatgi, A., Bakulin, A., and Fomel, S. (2024).**  
+  *Analyzing the impact of additive and multiplicative noise on seismic data analysis.*  
+  SEG International Exposition and Annual Meeting, Expanded Abstracts, SEG-2024-4086176.  
+  https://pubs.geoscienceworld.org/segeab/proceedings-split/SEGEAB.43/1/2132/694026
 
-- Rohatgi, A., Bakulin, A., and Fomel, S., 2024,  
-  **Phase pilot recovery: A foundation for mitigating speckle scattering noise in seismic data**:  
-  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 43.
+- **Rohatgi, A., Bakulin, A., and Fomel, S. (2024).**  
+  *Phase pilot recovery: A foundation for mitigating speckle scattering noise in seismic data.*  
+  International Meeting for Applied Geoscience & Energy (IMAGE), Expanded Abstracts, 43.  
+  https://pubs.geoscienceworld.org/segeab/proceedings/SEGEAB.43/1/2314/694142
