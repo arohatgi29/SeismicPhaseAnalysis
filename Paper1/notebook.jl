@@ -17,6 +17,9 @@ begin
 	plot!(x, wrapped_phase, label="Wrapped Phase", lw=4, color=:red, fontsize=14, labelfont=14, legendfont=14, tickfont=14, xguidefontsize=14, yguidefontsize=14, grid=false, title="Unwrapped vs Wrapped Phases")
 end
 
+# ╔═╡ 88d25221-0502-45e6-97ea-3836003da138
+using Distributions, CircStats
+
 # ╔═╡ 5ff814bb-706c-4266-9aa5-cc5fe7486a5f
 using StatsBase
 
@@ -191,16 +194,6 @@ function wrap_phase(unwrapped_phase)
     return mod.(unwrapped_phase .+ π, 2π) .- π
 end
 
-# ╔═╡ 2b06eb0b-51f2-45e3-af2e-6558a70d9bac
-begin
-	using Distributions, CircStats
-
-	kappa_values = 0.001:0.1:20
-	circ_var_values = map(κ -> 1.0 - circ_r(wrap_phase.(rand(VonMises(0.0, κ), 100_001))), kappa_values)
-
-	plot(kappa_values, circ_var_values, xlabel="κ", ylabel="Circular Variance", title="Circular Variance vs. κ", legend=false, linewidth=4, color=:black, grid=false, tickfontsize=12, xguidefontsize=14, yguidefontsize=14, titlefontsize=16, dpi=600, size=(700, 450))
-end
-
 # ╔═╡ efd83afd-bde3-4377-a1fb-f84a55307435
 md"""
 In short, low variance (``V`` close to 0) corresponds to high concentration (large ``\kappa``), indicating tightly clustered, coherent phases. High variance (``V`` near 1) implies low concentration (small ``\kappa``), as in a uniform phase distribution. This relationship is visualized in Figure 5.
@@ -213,6 +206,14 @@ Nonetheless, when the von Mises model is assumed, ``V`` and ``\kappa`` are tight
 
 In short, the von Mises distribution gives us more than a fit — it offers a framework. It allows us to interpret phase coherence, model uncertainty, and detect reliable signal content across frequencies. With this model in hand, we are now ready to return to our earlier examples, this time through the lens of circular statistics, and see what was hidden in plain sight.
 """
+
+# ╔═╡ fff4b317-faa5-4b42-ae5e-28d3f737255b
+begin
+	kappa_values = 0.001:0.1:20
+	circ_var_values = map(κ -> 1.0 - circ_r(wrap_phase.(rand(VonMises(0.0, κ), 100_001))), kappa_values)
+
+	plot(kappa_values, circ_var_values, xlabel="κ", ylabel="Circular Variance", title="Figure 5", legend=false, linewidth=4, color=:black, grid=false, tickfontsize=12, xguidefontsize=14, yguidefontsize=14, titlefontsize=16, dpi=600, size=(700, 450))
+end
 
 # ╔═╡ 05fd2bdc-299a-4470-baff-e9f60887bb1d
 function variance_to_kappa(V::Real)
@@ -345,11 +346,16 @@ fs = 1/T
 # ╔═╡ a6c85b6d-ad77-48da-896c-60f3db9ede1e
 num_wiggles=100
 
-# ╔═╡ d8337188-f09a-4155-8157-4154bed53f70
-#clean traces
+# ╔═╡ 0058040a-7e6b-479b-af98-c118ef00b1a5
+# clean traces
 begin
-    klauder = DataFrame(CSV.File("Klauder_wavelet.csv")).signal[300:800]
-	clean_traces = repeat(klauder, 1, num_wiggles)
+    using HTTP
+    file_id = "1suyqkO5jKfG3As5iub7iuWMDFXibwLH4"
+    url = "https://drive.google.com/uc?export=download&id=$file_id"
+
+    response = HTTP.get(url)
+    klauder = DataFrame(CSV.File(IOBuffer(response.body))).signal[300:800]
+    clean_traces = repeat(klauder, 1, num_wiggles)
 end
 
 # ╔═╡ ad9e5ebf-991e-4141-a228-b938b1f37979
@@ -374,26 +380,24 @@ end
 # ╔═╡ 33a629b6-e4db-4dad-acdf-688eac1a904f
 function trace_spectrum(data, dt; extras=false)
     nt, ntr = size(data)
-    fft_trace = fft(data[:, 1])
-    f_pos = fft_trace[2:end]
-    freq = fftfreq(length(f_pos), 1/dt)
-    pos_inds = findall(x -> x ≥ 0, freq)
+
+    freq = fftfreq(nt, 1/dt)
+    pos_inds = findall(x -> x > 0, freq)   # excludes DC
     nfreq = length(pos_inds)
-    
-    phase_vals = zeros(Float32, nfreq, ntr)
+
+    phase_vals     = zeros(Float32, nfreq, ntr)
     amplitude_vals = zeros(Float32, nfreq, ntr)
-    f_zero = zeros(ComplexF64, 1, ntr)
-    positive_freq = freq[pos_inds]
+    f_zero         = zeros(ComplexF64, 1, ntr)  
 
     for k in 1:ntr
         fft_trace = fft(data[:, k])
         f_zero[1, k] = fft_trace[1]
-        f_pos = fft_trace[2:end]
-        phase_vals[:, k] = angle.(f_pos[pos_inds])
-        amplitude_vals[:, k] = abs.(f_pos[pos_inds])
+        phase_vals[:, k]     = angle.(fft_trace[pos_inds])
+        amplitude_vals[:, k] = abs.(fft_trace[pos_inds])
     end
 
-    return extras ? (phase_vals, amplitude_vals, positive_freq, f_zero) :    (phase_vals, amplitude_vals)
+    return extras ? (phase_vals, amplitude_vals, freq[pos_inds], f_zero) :
+                    (phase_vals, amplitude_vals)
 end
 
 # ╔═╡ 8e7dc06e-2618-41ae-bfd8-26183a68a06b
@@ -403,6 +407,17 @@ begin
     phase_add_10dB, amplitude_add_10dB = trace_spectrum(add_noise_traces10dB, T)
 end
 
+# ╔═╡ 24f5695b-79a9-4384-9d0b-bc2140e3d749
+function circular_mean(α; w = ones(size(α)), dims = 1)
+    r = sum(w .* cis.(α); dims)
+    μ = angle.(r)
+    μ = length(μ) == 1 ? μ[1] : μ
+    return μ
+end
+
+# ╔═╡ b2a6e9e4-402f-47ed-b807-c72bf1fa7771
+
+
 # ╔═╡ bf54d506-2303-4a05-966f-6b18f0bb27bf
 function phase_stats(phase_matrix)
     nfreq = size(phase_matrix, 1)
@@ -410,7 +425,7 @@ function phase_stats(phase_matrix)
     var_vals  = zeros(Float64, nfreq)
     for i in 1:nfreq
         row = phase_matrix[i, :]
-        mean_vals[i], = circ_mean(row)
+        mean_vals[i] = circular_mean(row)
         var_vals[i]   = 1 - circ_r(row)
     end
     return mean_vals, var_vals
@@ -428,91 +443,99 @@ function von_mises_pdf(θ, μ, κ)
 end
 
 # ╔═╡ 1f7fb95a-253a-4d9a-ba11-0d5795826cac
-#phase distributions
-function phase_dist(phases, clean_phases, predicted_phases, freq_idx, freq_label)
-    mean_c, = circ_mean(phases[freq_idx, :])
-	kappa_c = circ_kappa(phases[freq_idx, :])
-    vm_dist = VonMises(mean_c, kappa_c)
-    θ = range(-π, π, length=1000)
+function phase_dist(phases, predicted_phases, freq_idx, freq_label; clean_phases=nothing)
+    mean_c,  = circ_mean(phases[freq_idx, :])
+    kappa_c  = circ_kappa(phases[freq_idx, :])
+    θ        = range(-π, π, length=1000)
     pdf_vals = [von_mises_pdf(x, mean_c, kappa_c) for x in θ]
-    ymax = maximum(pdf_vals)
+    ymax     = maximum(pdf_vals)
 
-    h = histogram(phases[freq_idx, :], fill="#6161f4", bins=100, label="$freq_label Hz", normalize=:true, xguidefontsize=12, yguidefontsize=12, grid=false)
-    plot!(h, θ, pdf_vals, label="vonMises Fit", xlabel="θ (radians)", ylabel="Density", lw=4, color=:red)
-    plot!(h, [predicted_phases[freq_idx,1], predicted_phases[freq_idx,1]], [0, ymax],
-          color="#8ed973", lw=6, label="Predicted Phase", grid=false)
-    plot!(h, [clean_phases[freq_idx,1], clean_phases[freq_idx,1]], [0, ymax],
-          color=:red, lw=2, linestyle=:dash, label="True Phase", grid=false)
+    h = histogram(phases[freq_idx, :], fill="#6161f4", bins=100, label="$freq_label Hz",
+                  normalize=:true, xguidefontsize=12, yguidefontsize=12, grid=false)
+    plot!(h, θ, pdf_vals, label="Von Mises Fit", xlabel="θ (radians)", ylabel="Density",
+          lw=4, color=:red)
+
+    # predicted phase line — optional
+    if !isnothing(predicted_phases)
+        plot!(h, [predicted_phases[freq_idx, 1], predicted_phases[freq_idx, 1]], [0, ymax],
+              color="#8ed973", lw=3, linestyle=:solid, label="Circular Mean", grid=false)
+    end
+
+    # clean phase line — optional
+    if !isnothing(clean_phases)
+        plot!(h, [clean_phases[freq_idx, 1], clean_phases[freq_idx, 1]], [0, ymax],
+              color=:red, lw=2, linestyle=:dash, label="True Phase", grid=false)
+    end
+
     return h
 end
 
-
 # ╔═╡ 52fa59b4-b583-477a-8a3c-d2555f464cba
-function circ_phase_dis(phases, μ, κ, clean_phase, predicted_phase;
-                        title_str="", fillcol="#6161f4", lw=3.5, nbins=50)
-    edges = range(-π, π; length=nbins+1)
-    h = fit(Histogram, phases, edges)
-    counts = h.weights
+
+function circ_phase_dist(phases, μ, κ, predicted_phase=nothing;
+                         clean_phase=nothing,
+                         title_str="", fillcol="#6161f4", lw=3.5, nbins=50)
+    edges   = range(-π, π; length=nbins+1)
+    h       = fit(Histogram, phases, edges)
+    counts  = h.weights
     centers = (edges[1:end-1] .+ edges[2:end]) ./ 2
-    widths = diff(edges)
-    maxc = maximum(counts)
-    r = maxc > 0 ? counts ./ maxc : zeros(length(counts))
+    widths  = diff(edges)
+    maxc    = maximum(counts)
+    r       = maxc > 0 ? counts ./ maxc : zeros(length(counts))
+
     p = plot(aspect_ratio=1, legend=:topright, grid=false,
-             xlims=(-1.1,1.1), ylims=(-1.1,1.1),
+             xlims=(-1.1, 1.1), ylims=(-1.1, 1.1),
              title=title_str, axis=false)
-    # histogram wedges
+
     for (c, w, rr) in zip(centers, widths, r)
         tseg = range(c - w/2, c + w/2; length=12)
-        x = vcat(0.0, rr*cos.(tseg), 0.0)
-        y = vcat(0.0, rr*sin.(tseg), 0.0)
-        plot!(p, x, y,
-              seriestype=:shape,
-              fc=fillcol,
-              lc=:black,
-              lw=1,
-              label=false)
+        x = vcat(0.0, rr .* cos.(tseg), 0.0)
+        y = vcat(0.0, rr .* sin.(tseg), 0.0)
+        plot!(p, x, y, seriestype=:shape, fc=fillcol, lc=:black, lw=1, label=false)
     end
+
     add_circle_axes!(p)
-    # von Mises fit
-    θ = range(-π, π, length=2000)
+
+    θ  = range(-π, π, length=2000)
     rv = @. exp(κ * cos(θ - μ)) / (2π * besseli(0, κ))
     rv = rv ./ maximum(rv)
-    plot!(p, rv .* cos.(θ), rv .* sin.(θ),
-          color=:red,
-          lw=lw,
-          label="VM fit")
-    # predicted and true phase arrows
-    for (angle, col, lab, ls) in [
-        (predicted_phase, "#8ed973", "Predicted", :solid),
-        (clean_phase, :red, "True phase", :dash)
-    ]
-        aw = mod(angle + π, 2π) - π
+    plot!(p, rv .* cos.(θ), rv .* sin.(θ), color=:red, lw=lw, label="VM fit")
+
+    # predicted phase arrow — optional
+    if !isnothing(predicted_phase)
+        aw = mod(predicted_phase + π, 2π) - π
         plot!(p, [0, cos(aw)], [0, sin(aw)],
-              lw=3,
-              color=col,
-              linestyle=ls,
-              arrow=:arrow,
-              label=lab)
+              lw=3, color="#8ed973", linestyle=:solid, arrow=:arrow, label="Predicted")
     end
+
+    # clean phase arrow — optional
+    if !isnothing(clean_phase)
+        aw_clean = mod(clean_phase + π, 2π) - π
+        plot!(p, [0, cos(aw_clean)], [0, sin(aw_clean)],
+              lw=3, color=:red, linestyle=:dash, arrow=:arrow, label="True phase")
+    end
+
     annotate!(p, [
-        ( 1.05,  0.00, text("0", 14)),
+        ( 1.05,  0.00, text("0",       14)),
         (-1.08,  0.00, text("-π,\n π", 14, :center)),
-        ( 0.00,  1.08, text("π/2", 14, :center)),
-        ( 0.00, -1.10, text("-π/2", 14, :center))
+        ( 0.00,  1.08, text("π/2",     14, :center)),
+        ( 0.00, -1.10, text("-π/2",    14, :center))
     ])
+
     return p
 end
 
 # ╔═╡ 41eda86c-1f12-4439-ba96-c197ded4e8ba
-function reconstruct_signal(amplitude, predicted_phases, f_dc, num_wiggles, signal_length)
+function reconstruct_signal(amplitude, predicted_phases, f_zero, num_wiggles, signal_length)
     new_f = amplitude .* exp.(1.0im .* predicted_phases)
-    
-    mirror = hcat([reverse(conj(new_f[:, i])) for i in 1:num_wiggles]...)
-    dc_row = transpose(fill(f_dc, num_wiggles))
-    full_f  = vcat(dc_row, new_f, mirror)
-    
+    mirror = zeros(ComplexF64, size(new_f, 1), num_wiggles)
+    for i in 1:num_wiggles
+        mirror[:, i] = reverse(conj(new_f[:, i]))
+    end
+    full_f = vcat(f_zero, new_f, mirror)
     return hcat([real(ifft(full_f[:, i])) for i in 1:num_wiggles]...)
 end
+
 
 # ╔═╡ 30afee40-8618-4a9a-b4ca-cc186496c47b
 begin
@@ -522,85 +545,83 @@ end
 
 # ╔═╡ 66745e37-96a2-4fc6-bd8f-106c4b7d0c17
 begin
-	common = (legend=false, ylabel="Time (ms)", xlabel="Trace Index",
-	          xguidefontsize=12, yguidefontsize=12, yflip=true)
+    common = (legend=false, ylabel="Time (ms)", xlabel="Trace Index",
+              xguidefontsize=12, yguidefontsize=12, yflip=true)
 
+    fig1a = plot(; common..., title=" Noisy Traces -2 dB")
+    for i in 1:size(add_noise_traces2dB, 2)
+        plot!(fig1a, add_noise_traces2dB[:, i] .+ i, t, linecolor=:black)
+    end
 
-	# Wiggle plots
-	p1 = plot(; common..., title="Noisy Traces -2 dB")
-	for i in 1:size(add_noise_traces2dB, 2)
-	    plot!(p1, add_noise_traces2dB[:, i] .+ i, t, linecolor=:black)
-	end
+    fig1b = plot(; common..., title="Corrected Traces")
+    for i in 1:size(reconstructed_2dB, 2)
+        plot!(fig1b, reconstructed_2dB[:, i] .+ i, t, linecolor=:black)
+    end
 
-	p2 = plot(; common..., title="Corrected Traces")
-	for i in 1:size(reconstructed_2dB, 2)
-	    plot!(p2, reconstructed_2dB[:, i] .+ i, t, linecolor=:black)
-	end
+    fig1e = heatmap(1:num_wiggles, positive_freq, phase_add_2dB,
+                    yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
+                    cmap=:coolwarm, title=" Noisy Phases", ylims=(0, 100), cbar=false)
 
-	# Phase heatmaps
-	p3 = heatmap(1:num_wiggles, positive_freq, phase_add_2dB,
-	             yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
-	             cmap=:coolwarm, title="Noisy Phases", ylims=(0,100), cbar=false)
+    fig1f = heatmap(1:num_wiggles, positive_freq, predicted_phase_2dB,
+                    yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
+                    cmap=:coolwarm, title=" Predicted Phases", ylims=(0, 100), cbar=false)
 
-	p4 = heatmap(1:num_wiggles, positive_freq, predicted_phase_2dB,
-	             yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
-	             cmap=:coolwarm, title="Predicted Phases", ylims=(0,100), cbar=false)
-
-	plot(p1, p2, 
-	     p3, p4, 
-	     layout=(2,2), size=(1000,700))
+    plot(fig1a, fig1b, fig1e, fig1f, layout=(2, 2), size=(1000, 700))
 end
 
 # ╔═╡ b3e3ff9f-a2c3-47c9-bb6b-6ba410680b59
 begin
-    h1 = phase_dist(phase_add_2dB, phase_clean, predicted_phase_2dB, 41, "40 Hz")
-    h2 = phase_dist(phase_add_2dB, phase_clean, predicted_phase_2dB, 61, "60 Hz")
+    fig1c = phase_dist(phase_add_2dB, predicted_phase_2dB, 41, "40 Hz"; clean_phases=phase_clean)
+    fig1d = phase_dist(phase_add_2dB, predicted_phase_2dB, 61, "60 Hz"; clean_phases=phase_clean)
 
-    c1 = circ_phase_dis(phase_add_2dB[41,:], circ_mean(phase_add_2dB[41,:])[1], circ_kappa(circ_r(phase_add_2dB[41,:])), phase_clean[41,1], predicted_phase_2dB[41,1]; title_str="40 Hz")
+    fig1g = circ_phase_dist(phase_add_2dB[41, :], circ_mean(phase_add_2dB[41, :])[1],
+                             circ_kappa(circ_r(phase_add_2dB[41, :])), predicted_phase_2dB[41, 1];
+                             clean_phase=phase_clean[41, 1], title_str="(g) 40 Hz")
 
-    c2 = circ_phase_dis(phase_add_2dB[61,:], circ_mean(phase_add_2dB[61,:])[1], circ_kappa(circ_r(phase_add_2dB[61,:])), phase_clean[61,1], predicted_phase_2dB[61,1]; title_str="60 Hz")
+    fig1h = circ_phase_dist(phase_add_2dB[61, :], circ_mean(phase_add_2dB[61, :])[1],
+                             circ_kappa(circ_r(phase_add_2dB[61, :])), predicted_phase_2dB[61, 1];
+                             clean_phase=phase_clean[61, 1], title_str="(h) 60 Hz")
 
-    plot(h1, h2, c1, c2; layout=(2,2), size=(1000,700), plot_title="Additive noise −2 dB")
+    plot(fig1c, fig1d, fig1g, fig1h; layout=(2, 2), size=(1000, 700), plot_title="Additive noise −2 dB")
 end
 
 # ╔═╡ 4759331e-8568-479a-810a-d3953ce56554
 begin
+    fig1i = plot(; common..., title="Noisy Traces -10 dB")
+    for i in 1:size(add_noise_traces10dB, 2)
+        plot!(fig1i, add_noise_traces10dB[:, i] .+ i, t, linecolor=:black)
+    end
 
-	# Wiggle plots
-	p5 = plot(; common..., title="Noisy Traces -10 dB")
-	for i in 1:size(add_noise_traces10dB, 2)
-	    plot!(p5, add_noise_traces10dB[:, i] .+ i, t, linecolor=:black)
-	end
+    fig1j = plot(; common..., title="Phase-only Corrected Traces")
+    for i in 1:size(reconstructed_10dB, 2)
+        plot!(fig1j, reconstructed_10dB[:, i] .+ i, t, linecolor=:black)
+    end
 
-	p6 = plot(; common..., title="Phase-only Corrected Traces")
-	for i in 1:size(reconstructed_10dB, 2)
-	    plot!(p6, reconstructed_10dB[:, i] .+ i, t, linecolor=:black)
-	end
+    fig1m = heatmap(1:num_wiggles, positive_freq, phase_add_10dB,
+                    yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
+                    cmap=:coolwarm, title="Noisy Phases", ylims=(0, 100), cbar=false)
 
-	# Phase heatmaps
-	p7 = heatmap(1:num_wiggles, positive_freq, phase_add_10dB,
-	             yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
-	             cmap=:coolwarm, title="Noisy Phases", ylims=(0,100), cbar=false)
+    fig1n = heatmap(1:num_wiggles, positive_freq, predicted_phase_10dB,
+                    yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
+                    cmap=:coolwarm, title="Predicted Phases", ylims=(0, 100), cbar=false)
 
-	p8 = heatmap(1:num_wiggles, positive_freq, predicted_phase_10dB,
-	             yflip=true, ylabel="Frequency (Hz)", xlabel="Trace",
-	             cmap=:coolwarm, title="Predicted Phases", ylims=(0,100), cbar=false)
-
-	plot(p5, p6, 
-	     p7, p8, 
-	     layout=(2,2), size=(1000,700))
+    plot(fig1i, fig1j, fig1m, fig1n, layout=(2, 2), size=(1000, 700))
 end
 
 # ╔═╡ 270901e6-eecd-47c0-94ef-05a440f1387b
 begin
-    h3 = phase_dist(phase_add_10dB, phase_clean, predicted_phase_10dB, 41, "40 Hz")
-    h4 = phase_dist(phase_add_10dB, phase_clean, predicted_phase_10dB, 61, "60 Hz")
+    fig1k = phase_dist(phase_add_10dB, predicted_phase_10dB, 41, "40 Hz"; clean_phases=phase_clean)
+    fig1l = phase_dist(phase_add_10dB, predicted_phase_10dB, 61, "60 Hz"; clean_phases=phase_clean)
 
-    c3 = circ_phase_dis(phase_add_10dB[41,:], circ_mean(phase_add_10dB[41,:])[1], circ_kappa(circ_r(phase_add_10dB[41,:])), phase_clean[41,1], predicted_phase_10dB[41,1]; title_str="40 Hz")
+    fig1o = circ_phase_dist(phase_add_10dB[41, :], circ_mean(phase_add_10dB[41, :])[1],
+                             circ_kappa(circ_r(phase_add_10dB[41, :])), predicted_phase_10dB[41, 1];
+                             clean_phase=phase_clean[41, 1], title_str="40 Hz")
 
-    c4 = circ_phase_dis(phase_add_10dB[61,:], circ_mean(phase_add_10dB[61,:])[1], circ_kappa(circ_r(phase_add_10dB[61,:])), phase_clean[61,1], predicted_phase_10dB[61,1]; title_str="60 Hz")
+    fig1p = circ_phase_dist(phase_add_10dB[61, :], circ_mean(phase_add_10dB[61, :])[1],
+                             circ_kappa(circ_r(phase_add_10dB[61, :])), predicted_phase_10dB[61, 1];
+                             clean_phase=phase_clean[61, 1], title_str="60 Hz")
 
-    plot(h2, h3, c3, c4; layout=(2,2), size=(1000,700), plot_title="Additive noise −2 dB")
+    plot(fig1k, fig1l, fig1o, fig1p; layout=(2, 2), size=(1000, 700), plot_title="Additive noise −10 dB")
 end
 
 # ╔═╡ 767aedf5-2c0e-4a77-955f-638e7d4f6764
@@ -657,22 +678,19 @@ reconstructed_mul  = reconstruct_signal(amplitude_clean, predicted_phase_mul,  f
 
 # ╔═╡ f1b88a07-20df-4aab-a359-1f577c3e5d74
 begin
-    # Multiplicative noisy traces
-    p = plot(legend=false, xlabel="Trace Index", ylabel="Time (ms)", yflip=true)
+    fig6a = plot(legend=false, xlabel="Trace Index", ylabel="Time (ms)", yflip=true,
+                 title="Multiplicative noise")
     for i in 1:size(mul_noisy_traces, 2)
-        plot!(p, mul_noisy_traces[:, i] .+ i, t, linecolor=:black, 
-			  title="Multiplicative noise")
+        plot!(fig6a, mul_noisy_traces[:, i] .+ i, t, linecolor=:black)
     end
 
-    # Reconstructed traces
-    pm = plot(legend=false, xlabel="Trace Index", ylabel="Time (ms)", yflip=true)
+    fig6c = plot(legend=false, xlabel="Trace Index", ylabel="Time (ms)", yflip=true,
+                 title="Phase-only corrected traces")
     for i in 1:size(reconstructed_mul, 2)
-        plot!(pm, reconstructed_mul[:, i] .+ i, t, linecolor=:black,
-			 title="Phase-only corrected traces")
+        plot!(fig6c, reconstructed_mul[:, i] .+ i, t, linecolor=:black)
     end
 
-    # Subplot
-    plot(p, pm, layout=(1,2), size=(900,400))
+    plot(fig6a, fig6c, layout=(1, 2), size=(900, 400))
 end
 
 # ╔═╡ e0cf9298-8430-428c-86d5-237885138a46
@@ -684,24 +702,225 @@ In summary, circular statistics quantify phase coherence and provide  practical 
 
 # ╔═╡ d187926c-47f8-46e2-9767-e88bc4b5f121
 begin
-    h5 = phase_dist(phase_mul, phase_clean, predicted_phase_mul, 21, "20 Hz")
-    h6 = phase_dist(phase_mul, phase_clean, predicted_phase_mul, 41, "40 Hz")
-    h7 = phase_dist(phase_mul, phase_clean, predicted_phase_mul, 61, "60 Hz")
+    fig6d = phase_dist(phase_mul, predicted_phase_mul, 21, "20 Hz"; clean_phases=phase_clean)
+    fig6e = phase_dist(phase_mul, predicted_phase_mul, 41, "40 Hz"; clean_phases=phase_clean)
+    fig6f = phase_dist(phase_mul, predicted_phase_mul, 61, "60 Hz"; clean_phases=phase_clean)
 
-
-    plot(h5, h6, h7; layout=(1,3),size=(1300,400), plot_title="Multiplicative noise", ylims=(0,1))
+    plot(fig6d, fig6e, fig6f; layout=(1, 3), size=(1300, 400), plot_title="Multiplicative noise", ylims=(0, 1))
 end
 
 # ╔═╡ 94e90594-aa3f-41be-becc-bfdbec42ff6c
 begin
-        c5 = circ_phase_dis(phase_mul[21,:], circ_mean(phase_mul[21,:])[1], circ_kappa(circ_r(phase_mul[21,:])), phase_clean[21,1], predicted_phase_mul[21,1]; title_str="20 Hz")
+    fig6g = circ_phase_dist(phase_mul[21, :], circ_mean(phase_mul[21, :])[1],
+                             circ_kappa(circ_r(phase_mul[21, :])), predicted_phase_mul[21, 1];
+                             clean_phase=phase_clean[21, 1], title_str="20 Hz")
 
-        c6 = circ_phase_dis(phase_mul[41,:], circ_mean(phase_mul[41,:])[1], circ_kappa(circ_r(phase_mul[41,:])), phase_clean[41,1], predicted_phase_mul[41,1]; title_str="40 Hz")
+    fig6h = circ_phase_dist(phase_mul[41, :], circ_mean(phase_mul[41, :])[1],
+                             circ_kappa(circ_r(phase_mul[41, :])), predicted_phase_mul[41, 1];
+                             clean_phase=phase_clean[41, 1], title_str="40 Hz")
 
-        c7 = circ_phase_dis(phase_mul[61,:], circ_mean(phase_mul[61,:])[1], circ_kappa(circ_r(phase_mul[61,:])), phase_clean[61,1], predicted_phase_mul[61,1]; title_str="60 Hz")
+    fig6i = circ_phase_dist(phase_mul[61, :], circ_mean(phase_mul[61, :])[1],
+                             circ_kappa(circ_r(phase_mul[61, :])), predicted_phase_mul[61, 1];
+                             clean_phase=phase_clean[61, 1], title_str="60 Hz")
 
-    plot(c5, c6, c7; layout=(1,3), legend=false, size=(1200,400))
+    plot(fig6g, fig6h, fig6i; layout=(1, 3), legend=false, size=(1200, 400))
 end
+
+# ╔═╡ 0b89b06a-e312-42c0-a955-1e3d3dbd68cf
+md"""
+# **Real-data example: Circular statistics reveal frequency-dependent phase coherence not captured by conventional measures**
+"""
+
+# ╔═╡ b352748d-4d80-4c89-b8a2-61624f834b11
+md"""
+We  now  apply  our  circular  statistical  framework  to  a  3D  prestack land data set from the continental United States. This field example illustrates how phase coherence varies with frequency and offset and how it can be quantified using circular variance and modeled using the von Mises distribution.To generalize this method for field data, we adopt a sliding-window strategy similar to that of Bakulin et al. (2020b, 2023, 2024).  At  each  time-frequency  location,  we  extract  a  phase  ensemble  from  a  window  moving  horizontally  across  traces,  compute the circular mean, circular variance, and κ, and assign these values to the center trace and time sample. Repeating this across the data set produces dense frequency- and offset-dependent phase behavior maps.Unlike  traditional  QC  methods  that  rely  on  amplitude  or  semblance,  this  approach  provides  a  direct  diagnostic  of  phase  coherence at each frequency. This workflow can be conceptually summarized as shown in Figure 7.
+"""
+
+# ╔═╡ 90e08b8d-24d3-400a-a495-d783355d8883
+function read_bin_seismic(file_id, rows, cols, ::Type{T}) where T
+    url = "https://drive.google.com/uc?export=download&id=$file_id"
+    response = HTTP.get(url)
+    data = Matrix{T}(undef, rows, cols)
+    read!(IOBuffer(response.body), data)
+    return data
+end
+
+# ╔═╡ 40364ee5-86ec-462b-9e86-d5d1622ed868
+raw_supergather = read_bin_seismic("1NZ1hvEVtE7rhHpaMAmbeKTeiAUZuj47y", 149, 10000, Float32)
+
+# ╔═╡ 2542f2d7-6520-44be-bcde-ad71e3f1190c
+processed_supergather = read_bin_seismic("1bPv6pk3eYzkHKU4tIiXmbGr9Uc26bIm4", 149, 10000, Float32)
+
+# ╔═╡ 9750b2be-909a-4e82-9434-b6270354a5c0
+t_seismic =range(start=0, step=0.002, length=149)
+
+# ╔═╡ 1bbe1988-ed01-44d0-99e8-db629df5f1e1
+phase_raw, amplitude_raw, positive_freq_raw, f_zero_raw = trace_spectrum(raw_supergather, T, extras=true)
+
+# ╔═╡ 9ce4765f-4da6-49b4-b118-2cf48462833f
+phase_processed, amplitude_processed, positive_freq_processed, f_zero_processed = trace_spectrum(processed_supergather, T, extras=true)
+
+# ╔═╡ 2cbfe1f2-68ee-4b9f-9617-cb1856f2ac0b
+function sliding_window_phase_stats(phase::Matrix{<:AbstractFloat}; batch_size::Int=2000)
+    half_batch = div(batch_size, 2)
+    n_rows, n_cols = size(phase)
+
+    circ_mean_grid = Matrix{Float64}(undef, n_rows, n_cols)
+    circ_var_grid  = Matrix{Float64}(undef, n_rows, n_cols)
+
+    for j in 1:n_cols
+        start_idx = max(1, j - half_batch)
+        end_idx   = min(n_cols, j + half_batch - 1)
+        mid_idx   = clamp(div(start_idx + end_idx, 2), 1, n_cols)
+
+        circ_mean_batch, circ_var_batch = phase_stats(phase[:, start_idx:end_idx])
+
+        circ_mean_grid[:, j]       .= circ_mean_batch
+        circ_mean_grid[:, mid_idx] .= circ_mean_batch
+        circ_var_grid[:, j]        .= circ_var_batch
+        circ_var_grid[:, mid_idx]  .= circ_var_batch
+    end
+
+    return circ_mean_grid, circ_var_grid
+end
+
+# ╔═╡ 03fd1fda-d2d7-4971-9c81-2d4a7230ecb0
+circ_mean_raw, circ_var_raw = sliding_window_phase_stats(phase_raw)
+
+# ╔═╡ 6f7fc42f-5e7e-497d-bae6-49279db25e8d
+begin
+    n_traces = size(raw_supergather, 2)
+    x_ticks  = ([1, n_traces], ["0", "22"])
+
+    fig7a = heatmap(1:n_traces, t_seismic, raw_supergather, clims=(-1,1),
+                    yflip=true, c=:grays, title="Prestack Seismic Data after alignment",
+                    ylabel="Time", xlabel="Offset (kft)", colorbar=false,
+                    xticks=x_ticks)
+
+    fig7b = heatmap(1:size(phase_raw, 2), positive_freq_raw[1:17, 1], phase_raw[1:17, :],
+                    yflip=true, xlabel="Offset (kft)", c=:coolwarm, ylabel="Frequency (Hz)",
+                    title="Seismic Phase Ensemble", clims=(-π, π), colorbar_title="Phase (rad)",
+                    xticks=x_ticks)
+
+    fig7c = heatmap(1:size(circ_mean_raw, 2), positive_freq_raw[1:17, 1], circ_mean_raw[1:17, :],
+                    yflip=true, xlabel="Offset (kft)", c=:coolwarm, ylabel="Frequency (Hz)",
+                    title="Circular Mean - Estimate of signal phase", clims=(-π, π), colorbar=false,
+                    xticks=x_ticks)
+
+    fig7d = heatmap(1:size(circ_var_raw, 2), positive_freq_raw[1:17, 1], circ_var_raw[1:17, :],
+                    yflip=true, xlabel="Offset (kft)", c=cgrad(:jet, rev=true), ylabel="Frequency (Hz)",
+                    title="Circular Variance - Quantify phase perturbations", clims=(0, 0.95), colorbar_title="Circ Var",
+                    xticks=x_ticks)
+
+    plot(fig7a, fig7b, fig7c, fig7d, layout=(2, 2), size=(1400, 800), dpi=300)
+end
+
+# ╔═╡ 873e79b9-80de-4e6e-9678-546409ec553e
+circ_mean_processed, circ_var_processed = sliding_window_phase_stats(phase_processed)
+
+# ╔═╡ 68c665fb-7475-4511-babb-c4f30de91f30
+md"""
+Figures  8a  and  8e  present  seismic  gathers  before  and  after  conventional processing, respectively, along with circular variance maps across frequency and offset. These gathers,  extracted  from  a  3D  CDP  supergather,  are  shown  after  normal  moveout (NMO) and statics corrections. The conventional time processing flow included: linear noise removal, refraction statics, random noise attenuation, two passes of surface-consistent deconvolu-tion, post-deconvolution noise attenua-tion (linear, random, and burst noise), merge phase and static matching, sur-face-consistent scaling, velocity analysis, and residual statics correction.While  reflectors  appear  visually  clearer  after  conventional  processing,  the variance maps reveal deeper insights: high-frequency  components  remain  dominated by noise, with circular vari-ance  approaching  one.  This  indicates  low phase coherence even after standard processing. The coherent signal is mostly confined to the 10–25 Hz range, reveal-ing  the  true  denoised  effective  band-width  for  phase-sensitive  applications  such  as  prestack  inversion  (Lichman,  1999). Furthermore, increased variance is clearly observed within the near-offset cone  compared  to  the  mid-  and  far-offset ranges.
+
+To validate this quantitatively, we examine phase distributions at 16 Hz within  the  far-offset  window  high-lighted by the red box (Figures 8a, 8e, and  8i),  each  fitted  with  a  von  Mises  model  (Figures  8c,  8g,  and  8k).  The distribution is broad and noisy in the unprocessed data, with only a faint central peak, corresponding to a high circular variance of 0.77 and low κ (≈ 0). After standard processing, the distribution tightens  modestly,  and  variance  decreases  to  0.49,  indicating  partial  improvement  in  phase  alignment.  Only  circular  mean  substitution produces a sharply peaked distribution (variance ≈ 0.01,  κ  ≫  1),  with  phases  tightly  clustered  around  the  true  direction. This progression demonstrates how circular statistics not  only  quantify  phase  coherence  but  also  enable  recovery  of  meaningful  signal  phase  estimates  that  can  be  used  for  phase  substitution (Bakulin et al., 2020b), time-frequency phase mask-ing (Bakulin et al., 2023), or other frequency-dependent denoising strategies aimed at restoring stable phase structure even in low-S/N conditions.
+
+Figure  8i  shows  the  result  of  the  phase  substitution  with  circular  mean.  This  result  is  similar  to  locally  stacked  phase  substitution (Bakulin et al., 2020b). We retain the original ampli-tude but replace the contaminated phase with its circular mean, computed across a large ensemble. The reflectors become better aligned, and coherence improves across frequencies and offsets, as seen in the updated variance map (Figure 8j). Importantly, this was achieved without unwrapping, wavelet assumptions, or time-domain stacking, just raw phase statistics.
+
+"""
+
+# ╔═╡ cba3003c-3d51-45b6-bcac-a271a0e60a8a
+predicted_phases = circ_mean_raw
+
+# ╔═╡ 0765e7bc-bae7-4c2a-befe-31e564ef465f
+enhanced_supergather = reconstruct_signal(
+    amplitude_raw, predicted_phases,
+    f_zero_raw,                      # FIX 5: pass full per-trace DC matrix
+    size(raw_supergather, 2),
+    size(raw_supergather, 1)
+)
+
+# ╔═╡ 28ceca48-3eb4-4b6c-9cf8-17d20a0ed943
+phase_enhanced, amplitude_enhanced, positive_freq_eenhanced, f_zero_enhanced = trace_spectrum(enhanced_supergather, T, extras=true);
+
+# ╔═╡ 8bb0a264-77a3-4dfb-94ac-def30bf19791
+circ_mean_enhanced, circ_var_enhanced = sliding_window_phase_stats(phase_enhanced);
+
+# ╔═╡ 917b9e5d-ac94-4adb-92d1-8babe9dda9e0
+function trace_normalize(data::Matrix{T}) where T <: AbstractFloat
+    normalized = similar(data)
+    for i in 1:size(data, 2)
+        max_val = maximum(abs.(data[:, i]))
+        normalized[:, i] .= max_val ≠ 0 ? data[:, i] ./ max_val : data[:, i]
+    end
+    return normalized
+end
+
+# ╔═╡ d768db26-faea-4b15-aaf0-39d4e02e3c89
+begin
+    raw_norm       = trace_normalize(raw_supergather)
+    processed_norm = trace_normalize(processed_supergather)
+    enhanced_norm  = trace_normalize(enhanced_supergather)
+
+    fig8a = heatmap(1:size(raw_norm, 2), t_seismic, raw_norm,
+                    yflip=true, c=:grays, title="(a) Raw",
+                    ylabel="Time", xlabel="Offset (kft)", colorbar=false, xticks=false)
+
+    fig8b = heatmap(1:size(circ_var_raw, 2), positive_freq_raw[1:17, 1], circ_var_raw[1:17, :],
+                    yflip=true, xlabel="Offset (kft)", c=cgrad(:jet, rev=true), ylabel="Frequency (Hz)",
+                    colorbar_title="Circ Var", title="Raw - Circular Variance", clims=(0, 0.95), xticks=false)
+
+    fig8c = heatmap(1:size(processed_norm, 2), t_seismic, processed_norm,
+                    yflip=true, c=:grays, title=" Processed",
+                    ylabel="Time", xlabel="Offset (kft)", colorbar=false, xticks=false)
+
+    fig8d = heatmap(1:size(circ_var_processed, 2), positive_freq_processed[1:17, 1], circ_var_processed[1:17, :],
+                    yflip=true, xlabel="Offset (kft)", c=cgrad(:jet, rev=true), ylabel="Frequency (Hz)",
+                    colorbar_title="Circ Var", title="Processed - Circular Variance", clims=(0, 0.95), xticks=false)
+
+    fig8e = heatmap(1:size(enhanced_norm, 2), t_seismic, enhanced_norm,
+                    yflip=true, c=:grays, title=" Enhanced",
+                    ylabel="Time", xlabel="Offset (kft)", colorbar=false, xticks=false)
+
+    fig8f = heatmap(1:size(circ_var_enhanced, 2), positive_freq_eenhanced[1:17, 1], circ_var_enhanced[1:17, :],
+                    yflip=true, xlabel="Offset (kft)", c=cgrad(:jet, rev=true), ylabel="Frequency (Hz)",
+                    colorbar_title="Circ Var", title=" Enhanced - Circular Variance", clims=(0, 0.95), xticks=false)
+
+    plot(fig8a, fig8b, fig8c, fig8d, fig8e, fig8f, layout=(3, 2), size=(1200, 900), dpi=1000)
+end
+
+# ╔═╡ 9a40af49-298a-4c2f-b16c-0e8141c0942c
+freq_idx = argmin(abs.(positive_freq_raw[:, 1] .- 16))
+
+# ╔═╡ 41ceaff9-4f4b-4f79-a99a-3b14e764e9f6
+begin
+    hd1 = phase_dist(phase_raw[:,       2500:7500], nothing, 5, positive_freq_raw[5, 1])
+    hd2 = phase_dist(phase_processed[:, 2500:7500], nothing, 5, positive_freq_raw[5, 1])
+    hd3 = phase_dist(phase_enhanced[:,  2500:7500], nothing, 5, positive_freq_raw[5, 1])
+
+    cd1 = circ_phase_dist(phase_raw[5,       2500:7500], circ_mean(phase_raw[5,       2500:7500])[1],
+                          circ_kappa(circ_r(phase_raw[5,       2500:7500]));
+                          title_str="$(round(positive_freq_raw[5,1], digits=1)) Hz - Raw")
+
+    cd2 = circ_phase_dist(phase_processed[5, 2500:7500], circ_mean(phase_processed[5, 2500:7500])[1],
+                          circ_kappa(circ_r(phase_processed[5, 2500:7500]));
+                          title_str="$(round(positive_freq_raw[5,1], digits=1)) Hz - Processed")
+
+    cd3 = circ_phase_dist(phase_enhanced[5,  2500:7500], circ_mean(phase_enhanced[5,  2500:7500])[1],
+                          circ_kappa(circ_r(phase_enhanced[5,  2500:7500]));
+                          title_str="$(round(positive_freq_raw[5,1], digits=1)) Hz - Enhanced")
+
+    plot(hd1, cd1, hd2, cd2, hd3, cd3, layout=(3, 2), size=(1000, 900), dpi=300)
+end
+
+# ╔═╡ 2520c0d8-8dc7-46cd-ab19-a7575fada5d1
+md"""
+This method is most appropriate when applied to windows or frequency slices dominated by a single coherent event. Flatness is not required, as long as the moveout of the dominant event is estimated, the window can be aligned accordingly, as is typically done in local stacking (Bakulin et al., 2020a, 2020b, 2023). For windows  with  multiple  dipping  or  interfering  events,  a  single  phase estimate may be inadequate, and more localized or adaptive strategies may be necessary to avoid misrepresentation. The method also assumes densely sampled seismic data, and the selection of ensemble size remains a critical consideration. Including many traces within each window helps ensure statistical stability of the calculated  circular  mean  and  variance.  However,  even  limited  phase averaging or local stacking can be extremely beneficial in reducing  phase  variability  in  the  data,  especially  for  prestack  enhancement (Bakulin et al., 2024).
+
+It is important to emphasize that phase substitution is not necessarily  intended  as  a  final  processing  solution.  Instead,  it  serves  as  a  diagnostic  test  to  demonstrate  that  the  estimated  mean phase is physically meaningful and capable of producing a  coherent,  trackable  signal.  Once  verified,  the  circular  mean  can be used directly or serve as input to more advanced workflows, such  as  time-frequency  phase  masking  (Bakulin  et  al.,  2023)  where the goal is to decontaminate the signal phase and address amplitude  noise  through  separate,  targeted  manipulation  of  phase  and  amplitude,  unlike  traditional  local  stacking  which  handles both simultaneously.
+
+Together,  these  results  demonstrate  that  wrapped  seismic  phase  can  be  a  powerful  diagnostic  and  correction  tool  when  analyzed through circular statistics. Circular variance maps reveal where the signal is coherent, von Mises modeling explains phase behavior, and circular mean substitution provides a robust cor-rection path, all in a unified, interpretable framework.
+
+"""
 
 # ╔═╡ e5bedb7e-3cb2-48a5-b27c-196102bfcfbb
 md"""
@@ -797,6 +1016,7 @@ CircStats = "2f6764a1-d620-4564-9394-76eb7c776766"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
@@ -806,8 +1026,9 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 CSV = "~0.10.15"
 CircStats = "~1.0.4"
 DataFrames = "~1.8.1"
-Distributions = "~0.25.120"
+Distributions = "~0.25.123"
 FFTW = "~1.10.0"
+HTTP = "~1.10.19"
 Plots = "~1.41.4"
 SpecialFunctions = "~2.6.1"
 StatsBase = "~0.34.10"
@@ -819,7 +1040,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "5dcc9740aa8b76b4d60da86e043fdd32b94a5cce"
+project_hash = "be2e4987487542d1aa1f18d7731157e1e8388db8"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -945,9 +1166,9 @@ uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.13.1"
 
 [[deps.Combinatorics]]
-git-tree-sha1 = "8010b6bb3388abe68d95743dcbea77650bb2eddf"
+git-tree-sha1 = "c761b00e7755700f9cdf5b02039939d1359330e1"
 uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
-version = "1.0.3"
+version = "1.1.0"
 
 [[deps.CommonSolve]]
 git-tree-sha1 = "0eee5eb66b1cf62cd6ad1b460238e60e4b09400c"
@@ -1050,9 +1271,9 @@ version = "1.9.1"
 
 [[deps.Distributions]]
 deps = ["AliasTables", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns"]
-git-tree-sha1 = "3e6d038b77f22791b8e3472b7c633acea1ecac06"
+git-tree-sha1 = "fbcc7610f6d8348428f722ecbe0e6cfe22e672c6"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.120"
+version = "0.25.123"
 
     [deps.Distributions.extensions]
     DistributionsChainRulesCoreExt = "ChainRulesCore"
@@ -1099,7 +1320,7 @@ uuid = "c87230d0-a227-11e9-1b43-d7ebe4e7570a"
 version = "0.4.5"
 
 [[deps.FFMPEG_jll]]
-deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
+deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libva_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
 git-tree-sha1 = "01ba9d15e9eae375dc1eb9589df76b3572acd3f2"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
 version = "8.0.1+0"
@@ -1133,15 +1354,21 @@ version = "1.11.0"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "173e4d8f14230a7523ae11b9a3fa9edb3e0efd78"
+git-tree-sha1 = "2f979084d1e13948a3352cf64a25df6bd3b4dca3"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "1.14.0"
-weakdeps = ["PDMats", "SparseArrays", "Statistics"]
+version = "1.16.0"
 
     [deps.FillArrays.extensions]
     FillArraysPDMatsExt = "PDMats"
     FillArraysSparseArraysExt = "SparseArrays"
+    FillArraysStaticArraysExt = "StaticArrays"
     FillArraysStatisticsExt = "Statistics"
+
+    [deps.FillArrays.weakdeps]
+    PDMats = "90014a1f-27ba-587c-ab20-58faa44d9150"
+    SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+    StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+    Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[deps.FixedPointNumbers]]
 deps = ["Statistics"]
@@ -1589,9 +1816,13 @@ version = "10.42.0+1"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
-git-tree-sha1 = "f07c06228a1c670ae4c87d1276b92c7c597fdda0"
+git-tree-sha1 = "e4cff168707d441cd6bf3ff7e4832bdf34278e4a"
 uuid = "90014a1f-27ba-587c-ab20-58faa44d9150"
-version = "0.11.35"
+version = "0.11.37"
+weakdeps = ["StatsBase"]
+
+    [deps.PDMats.extensions]
+    StatsBaseExt = "StatsBase"
 
 [[deps.Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl"]
@@ -1763,9 +1994,9 @@ version = "1.3.1"
 
 [[deps.Rmath]]
 deps = ["Random", "Rmath_jll"]
-git-tree-sha1 = "852bd0f55565a9e973fcfee83a84413270224dc4"
+git-tree-sha1 = "5b3d50eb374cea306873b371d3f8d3915a018f0b"
 uuid = "79098fc4-a85e-5d69-aa6a-4863f24498fa"
-version = "0.8.0"
+version = "0.9.0"
 
 [[deps.Rmath_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1883,9 +2114,9 @@ version = "0.34.10"
 
 [[deps.StatsFuns]]
 deps = ["HypergeometricFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
-git-tree-sha1 = "8e45cecc66f3b42633b8ce14d431e8e57a3e242e"
+git-tree-sha1 = "91f091a8716a6bb38417a6e6f274602a19aaa685"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "1.5.0"
+version = "1.5.2"
 
     [deps.StatsFuns.extensions]
     StatsFunsChainRulesCoreExt = "ChainRulesCore"
@@ -2092,6 +2323,12 @@ git-tree-sha1 = "7ed9347888fac59a618302ee38216dd0379c480d"
 uuid = "ea2f1a96-1ddc-540d-b46f-429655e07cfa"
 version = "0.9.12+0"
 
+[[deps.Xorg_libpciaccess_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Zlib_jll"]
+git-tree-sha1 = "4909eb8f1cbf6bd4b1c30dd18b2ead9019ef2fad"
+uuid = "a65dc6b1-eb27-53a1-bb3e-dea574b5389e"
+version = "0.18.1+0"
+
 [[deps.Xorg_libxcb_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libXau_jll", "Xorg_libXdmcp_jll"]
 git-tree-sha1 = "bfcaf7ec088eaba362093393fe11aa141fa15422"
@@ -2204,6 +2441,12 @@ git-tree-sha1 = "9bf7903af251d2050b467f76bdbe57ce541f7f4f"
 uuid = "1183f4f0-6f2a-5f1a-908b-139f9cdfea6f"
 version = "0.2.2+0"
 
+[[deps.libdrm_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libpciaccess_jll"]
+git-tree-sha1 = "63aac0bcb0b582e11bad965cef4a689905456c03"
+uuid = "8e53e030-5e6c-5a89-a30b-be5b7263a166"
+version = "2.4.125+1"
+
 [[deps.libevdev_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "56d643b57b188d30cccc25e331d416d3d358e557"
@@ -2227,6 +2470,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Zlib_jll"]
 git-tree-sha1 = "6ab498eaf50e0495f89e7a5b582816e2efb95f64"
 uuid = "b53b4c65-9356-5827-b1ea-8c7a1a84506f"
 version = "1.6.54+0"
+
+[[deps.libva_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libX11_jll", "Xorg_libXext_jll", "Xorg_libXfixes_jll", "libdrm_jll"]
+git-tree-sha1 = "7dbf96baae3310fe2fa0df0ccbb3c6288d5816c9"
+uuid = "9a156e7d-b971-5f62-b2c9-67348b8fb97c"
+version = "2.23.0+0"
 
 [[deps.libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll"]
@@ -2291,8 +2540,9 @@ version = "1.13.0+0"
 # ╟─e3214f03-f2a4-4961-8a19-8972e55d58ba
 # ╟─05619bbf-9e1b-4955-a7e6-2e849a0932d4
 # ╠═24e2c578-835b-475d-8947-709d9fa65677
-# ╠═2b06eb0b-51f2-45e3-af2e-6558a70d9bac
+# ╠═88d25221-0502-45e6-97ea-3836003da138
 # ╟─efd83afd-bde3-4377-a1fb-f84a55307435
+# ╠═fff4b317-faa5-4b42-ae5e-28d3f737255b
 # ╠═05fd2bdc-299a-4470-baff-e9f60887bb1d
 # ╠═4977c317-74cc-43ef-9f4b-ccbafbbc0496
 # ╠═99e07135-36d9-4820-bb89-29a4194715f6
@@ -2306,12 +2556,14 @@ version = "1.13.0+0"
 # ╠═419bc868-69ec-41b6-8d1e-8aaf3d5a29a5
 # ╠═a0787960-a985-4a22-bfa2-fbeb86dda5c1
 # ╠═a6c85b6d-ad77-48da-896c-60f3db9ede1e
-# ╠═d8337188-f09a-4155-8157-4154bed53f70
+# ╠═0058040a-7e6b-479b-af98-c118ef00b1a5
 # ╠═ad9e5ebf-991e-4141-a228-b938b1f37979
 # ╠═940cef5f-027c-43b4-8aec-5e74be24dd16
 # ╠═9ad3274c-c268-4a51-b004-12ae2e46bc6c
 # ╠═33a629b6-e4db-4dad-acdf-688eac1a904f
 # ╠═8e7dc06e-2618-41ae-bfd8-26183a68a06b
+# ╠═24f5695b-79a9-4384-9d0b-bc2140e3d749
+# ╠═b2a6e9e4-402f-47ed-b807-c72bf1fa7771
 # ╠═bf54d506-2303-4a05-966f-6b18f0bb27bf
 # ╠═b6eb8779-a9fc-4bd0-9af1-df96f52db306
 # ╠═60ae3c91-2764-46f0-b916-7474b9e466f0
@@ -2335,6 +2587,28 @@ version = "1.13.0+0"
 # ╟─e0cf9298-8430-428c-86d5-237885138a46
 # ╠═d187926c-47f8-46e2-9767-e88bc4b5f121
 # ╠═94e90594-aa3f-41be-becc-bfdbec42ff6c
+# ╟─0b89b06a-e312-42c0-a955-1e3d3dbd68cf
+# ╟─b352748d-4d80-4c89-b8a2-61624f834b11
+# ╠═90e08b8d-24d3-400a-a495-d783355d8883
+# ╠═40364ee5-86ec-462b-9e86-d5d1622ed868
+# ╠═2542f2d7-6520-44be-bcde-ad71e3f1190c
+# ╠═9750b2be-909a-4e82-9434-b6270354a5c0
+# ╠═1bbe1988-ed01-44d0-99e8-db629df5f1e1
+# ╠═9ce4765f-4da6-49b4-b118-2cf48462833f
+# ╠═2cbfe1f2-68ee-4b9f-9617-cb1856f2ac0b
+# ╠═03fd1fda-d2d7-4971-9c81-2d4a7230ecb0
+# ╠═6f7fc42f-5e7e-497d-bae6-49279db25e8d
+# ╠═873e79b9-80de-4e6e-9678-546409ec553e
+# ╟─68c665fb-7475-4511-babb-c4f30de91f30
+# ╠═cba3003c-3d51-45b6-bcac-a271a0e60a8a
+# ╠═0765e7bc-bae7-4c2a-befe-31e564ef465f
+# ╠═28ceca48-3eb4-4b6c-9cf8-17d20a0ed943
+# ╠═8bb0a264-77a3-4dfb-94ac-def30bf19791
+# ╠═917b9e5d-ac94-4adb-92d1-8babe9dda9e0
+# ╠═d768db26-faea-4b15-aaf0-39d4e02e3c89
+# ╠═9a40af49-298a-4c2f-b16c-0e8141c0942c
+# ╠═41ceaff9-4f4b-4f79-a99a-3b14e764e9f6
+# ╟─2520c0d8-8dc7-46cd-ab19-a7575fada5d1
 # ╟─e5bedb7e-3cb2-48a5-b27c-196102bfcfbb
 # ╟─d190ddf1-b320-4ba9-8da1-254e682259f7
 # ╟─423e4c92-8645-4174-bec6-a568921b0d72
