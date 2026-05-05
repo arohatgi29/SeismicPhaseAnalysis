@@ -1,6 +1,6 @@
 # SeismicPhaseAnalysis
 
-Code and data accompanying publications on data-driven seismic phase analysis by A. Rohatgi and collaborators.
+Code and data accompanying publications on Data-Driven Seismic Phase Analysis.
 
 Each subdirectory corresponds to a published or submitted paper and is self-contained: you can reproduce a paper's results by working entirely within its folder.
 
