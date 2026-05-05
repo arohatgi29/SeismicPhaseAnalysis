@@ -1,7 +1,5 @@
 # SeismicPhaseAnalysis
 
-![Language](https://img.shields.io/github/languages/top/arohatgi29/SeismicPhaseAnalysis)
-
 Code and data accompanying publications on data-driven seismic phase analysis by A. Rohatgi and collaborators.
 
 Each subdirectory corresponds to a published or submitted paper and is self-contained: you can reproduce a paper's results by working entirely within its folder.
@@ -17,6 +15,8 @@ A data-driven workflow for analyzing seismic phase using circular statistics.
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.XXXXXXX-blue)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+![Language](https://img.shields.io/github/languages/top/arohatgi29/SeismicPhaseAnalysis)
+
 
 <!-- Add future papers here as new entries -->
 
