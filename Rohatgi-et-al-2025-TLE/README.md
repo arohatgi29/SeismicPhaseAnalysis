@@ -85,7 +85,7 @@ If you use this work, please cite:
 
 ## License
 
-Please refer to the paper and journal for terms of use.
+The code in this repository is released under the MIT License. Data, figures, and manuscript PDFs may be subject to separate copyright or data-owner restrictions.
 
 ---
 
