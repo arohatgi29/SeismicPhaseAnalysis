@@ -7,16 +7,14 @@ Each subdirectory corresponds to a published or submitted paper and is self-cont
 ## Papers in this repository
 
 ### Data-driven analysis of seismic phase using circular statistics
-A. Rohatgi, A. Bakulin, and S. Fomel — *The Leading Edge*, 2025.
+A. Rohatgi, A. Bakulin, and S. Fomel — *The Leading Edge*, 44(9), 683–691, 2025.
 
 A data-driven workflow for analyzing seismic phase using circular statistics.
-
-📁 [`tle2025_circular_statistics/`](./tle2025_circular_statistics/)
-
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.XXXXXXX-blue)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![Julia](https://img.shields.io/badge/Julia-9558B2?style=flat-square&logo=julia&logoColor=white)](https://julialang.org)
+[![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1f6feb?style=flat-square)](https://doi.org/10.1190/tle44090683.1)
 [![Zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
-![Language](https://img.shields.io/github/languages/top/arohatgi29/SeismicPhaseAnalysis)
 
+📁 Folder: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
 <!-- Add future papers here as new entries -->
 
@@ -36,7 +34,7 @@ Each paper folder lists its own dependencies and entry points. Software versions
 
 If you use code or data from this repository, please cite both the paper and the archived release:
 
-> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Data-driven analysis of seismic phase using circular statistics. *The Leading Edge*. [DOI when available]
+> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Data-driven analysis of seismic phase using circular statistics. *The Leading Edge*, 44(9), 683–691. https://doi.org/10.1190/tle44090683.1
 >
 > Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Code and data for "Data-driven analysis of seismic phase using circular statistics" (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX
 
