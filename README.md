@@ -1,20 +1,18 @@
-# SeismicPhaseAnalysis
+# Seismic Phase Statistics
 
-Code and data accompanying publications on Data-Driven Seismic Phase Analysis.
+Code and data accompanying publications on Data-Driven Seismic Phase Analysis using Circular Statistics.
 
 Each subdirectory corresponds to a published or submitted paper and is self-contained: you can reproduce a paper's results by working entirely within its folder.
 
 ## Papers in this repository
 
-### Data-driven analysis of seismic phase using circular statistics
+## Data-driven analysis of seismic phase using circular statistics
 A. Rohatgi, A. Bakulin, and S. Fomel,  *The Leading Edge*, 44(9), 683–691, 2025.
-
-A data-driven workflow for analyzing seismic phase using circular statistics.
 
 [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1a365d?style=flat-square)](https://doi.org/10.1190/tle44090683.1)
 [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20055058-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20055058)
 
-Paper 1: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
+Folder: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
 <!-- Add future papers here as new entries -->
 
