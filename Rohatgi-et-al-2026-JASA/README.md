@@ -1,6 +1,5 @@
 # Amplitude-Invariant Phase Masking for Coherence Recovery in Scattered Wavefields
 
-[![Preprint](https://img.shields.io/badge/Preprint-PDF-darkred)](Preprint.pdf)
 [![Code](https://img.shields.io/badge/Code-PDF-green)](code.pdf)
 [![Pluto](https://img.shields.io/badge/Pluto-Notebook-blue?logo=julia&logoColor=white)](notebook.jl)
 [![Language](https://img.shields.io/badge/Julia-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
