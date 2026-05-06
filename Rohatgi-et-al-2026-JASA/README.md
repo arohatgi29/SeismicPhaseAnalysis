@@ -65,8 +65,8 @@ Pkg.add("Pluto")
 
 ```bash
 # Clone the repository
-git clone https://github.com/TCCS-CODES/Rohatgi-etal-seismic-phase-masking.git
-cd Rohatgi-etal-seismic-phase-masking.git)
+git clone https://github.com/arohatgi29/SeismicPhaseStatistics.git
+cd SeismicPhaseStatistics/Rohatgi-et-al-2026-JASA
 ```
 
 From the Julia REPL:
