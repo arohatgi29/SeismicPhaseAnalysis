@@ -8,13 +8,15 @@ Each subdirectory corresponds to a published or submitted paper and is self-cont
 
 - **Data-driven analysis of seismic phase using circular statistics**
   A. Rohatgi, A. Bakulin, and S. Fomel, *The Leading Edge*, 44(9), 683–691, 2025.
+  
   [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-2ea44f?style=flat-square)](https://doi.org/10.1190/tle44090683.1)
-  [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20055837-2ea44f?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20055837)
+  [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20055837-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20055837)
   Folder: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
 - **Amplitude-invariant phase masking for coherence recovery in scattered wavefields**
-  A. Rohatgi, A. Bakulin, and S. Fomel — submitted to *Journal of the American Statistical Association*, 2026.
-  [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20059964-2ea44f?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20059964)
+  A. Rohatgi, A. Bakulin, and S. Fomel — *JASA Express Letters*, 2026 (under revision).
+  
+  [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20059964-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20059964)
   Folder: [`Rohatgi-et-al-2026-JASA/`](./Rohatgi-et-al-2026-JASA)
 
 <!-- Add future papers here as new entries -->
