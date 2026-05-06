@@ -6,22 +6,28 @@ Each subdirectory corresponds to a published or submitted paper and is self-cont
 
 ## Papers in this repository
 
-## Data-driven analysis of seismic phase using circular statistics
-A. Rohatgi, A. Bakulin, and S. Fomel,  *The Leading Edge*, 44(9), 683–691, 2025.
+### Data-driven analysis of seismic phase using circular statistics
+A. Rohatgi, A. Bakulin, and S. Fomel, *The Leading Edge*, 44(9), 683–691, 2025.
 
 [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1a365d?style=flat-square)](https://doi.org/10.1190/tle44090683.1)
 [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20055837-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20055837)
 
 Folder: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
-<!-- Add future papers here as new entries -->
+### Amplitude-invariant phase masking for coherence recovery in scattered wavefields
+A. Rohatgi, A. Bakulin, and S. Fomel — submitted to *Journal of the American Statistical Association*, 2026.
+
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20059964-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20059964)
+
+Folder: [`Rohatgi-et-al-2026-JASA/`](./Rohatgi-et-al-2026-JASA)
+
 
 ## How to reproduce a paper's results
 
 1. Clone the repo:
 ```bash
-   git clone https://github.com/arohatgi29/SeismicPhaseAnalysis.git
-   cd SeismicPhaseAnalysis
+   git clone https://github.com/arohatgi29/SeismicPhaseStatistics.git
+   cd SeismicPhaseStatistics
 ```
 2. Navigate to the relevant paper folder.
 3. Follow the instructions in that folder's `README.md`.
@@ -36,4 +42,4 @@ Released under the [MIT License](./LICENSE) unless noted otherwise within a pape
 
 Akshika Rohatgi — [GitHub @arohatgi29](https://github.com/arohatgi29)
 
-Issues and questions are welcome via the [Issues tab](https://github.com/arohatgi29/SeismicPhaseAnalysis/issues).
+Issues and questions are welcome via the [Issues tab](https://github.com/arohatgi29/SeismicPhaseStatistics/issues).
