@@ -40,7 +40,6 @@ Synthetic experiments confirm that PCM outperforms conventional phase masking vi
 
 | File | Description |
 |------|-------------|
-| `Preprint.pdf` | Preprint of the paper |
 | `code.pdf` | Complete code associated with the paper |
 | `notebook.jl` | Reproducible Pluto notebook |
 
