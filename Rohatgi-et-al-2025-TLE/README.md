@@ -25,7 +25,6 @@ Recognizing seismic phase as a primary attribute in seismic processing workflows
 
 | File | Description |
 |------|-------------|
-| `Data driven analysis of seismic phase using circular statistics.pdf` | Published paper |
 | `code.pdf` | Complete code associated with the paper |
 | `notebook.jl` | Reproducible Pluto notebook |
 
@@ -50,8 +49,8 @@ Pkg.add("Pluto")
 
 ```bash
 # Clone the repository
-git clone https://github.com/arohatgi29/SeismicPhaseAnalysis.git
-cd SeismicPhaseAnalysis.git
+git clone https://github.com/arohatgi29/SeismicPhaseStatistics.git
+cd SeismicPhaseStatistics/Rohatgi-et-al-2025-TLE
 ```
 
 From the Julia REPL:
