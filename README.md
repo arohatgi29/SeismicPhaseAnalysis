@@ -13,7 +13,7 @@ A data-driven workflow for analyzing seismic phase using circular statistics.
 
 [![Julia](https://img.shields.io/badge/Julia-9558B2?style=flat-square&logo=julia&logoColor=white)](https://julialang.org)
 [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1f6feb?style=flat-square)](https://doi.org/10.1190/tle44090683.1)
-[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.XXXXXXX-2ea44f?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20045225)
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20045225-2ea44f?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20045225)
 
 📁 Folder: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
