@@ -1,7 +1,6 @@
 # Data-Driven Analysis of Seismic Phase Using Circular Statistics
 
 [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1a365d)](https://pubs.geoscienceworld.org/seg/tle/article/44/9/683/660917/Data-driven-analysis-of-seismic-phase-using)
-[![Paper](https://img.shields.io/badge/Paper-PDF-cc0000)](Data%20driven%20analysis%20of%20seismic%20phase%20using%20circular%20statistics.pdf)
 [![Code](https://img.shields.io/badge/Code-PDF-2ea44f)](code.pdf)
 [![Pluto](https://img.shields.io/badge/Pluto-Notebook-4063D8?logo=julia&logoColor=white)](notebook.jl)
 [![Language](https://img.shields.io/badge/Julia-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
