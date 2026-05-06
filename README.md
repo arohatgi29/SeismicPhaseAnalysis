@@ -30,14 +30,6 @@ Paper 1: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
 Each paper folder lists its own dependencies and entry points. Software versions used for the published results are pinned in each folder.
 
-## Citing this work
-
-If you use code or data from this repository, please cite both the paper and the archived release:
-
-> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Data-driven analysis of seismic phase using circular statistics. *The Leading Edge*, 44(9), 683–691. https://doi.org/10.1190/tle44090683.1
->
-> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Code and data for "Data-driven analysis of seismic phase using circular statistics" (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20045225
-
 ## License
 
 Released under the [MIT License](./LICENSE) unless noted otherwise within a paper folder.
