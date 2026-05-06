@@ -7,7 +7,7 @@ Each subdirectory corresponds to a published or submitted paper and is self-cont
 ## Papers in this repository
 
 ### Data-driven analysis of seismic phase using circular statistics
-A. Rohatgi, A. Bakulin, and S. Fomel — *The Leading Edge*, 44(9), 683–691, 2025.
+A. Rohatgi, A. Bakulin, and S. Fomel,  *The Leading Edge*, 44(9), 683–691, 2025.
 
 A data-driven workflow for analyzing seismic phase using circular statistics.
 
