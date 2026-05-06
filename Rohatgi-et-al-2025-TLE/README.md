@@ -5,6 +5,7 @@
 [![Code](https://img.shields.io/badge/Code-PDF-2ea44f)](code.pdf)
 [![Pluto](https://img.shields.io/badge/Pluto-Notebook-4063D8?logo=julia&logoColor=white)](notebook.jl)
 [![Language](https://img.shields.io/badge/Julia-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20045225-1682D4?logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20045225)
 
 **Rohatgi, A., Bakulin, A., and Fomel, S. (2025)**
 *The Leading Edge*, 44(9), 683–691
