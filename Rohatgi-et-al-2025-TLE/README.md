@@ -65,22 +65,13 @@ This will open the Pluto notebook in your browser. Any dependencies used in the 
 
 ---
 
-## Citation
+## Citing this work
 
-If you use this work, please cite:
+If you use code or data from this repository, please cite both the paper and the archived release:
 
-```bibtex
-@article{rohatgi2025phase,
-  title   = {Data-driven analysis of seismic phase using circular statistics},
-  author  = {Rohatgi, A. and Bakulin, A. and Fomel, S.},
-  journal = {The Leading Edge},
-  volume  = {44},
-  number  = {9},
-  pages   = {683--691},
-  year    = {2025},
-  doi     = {10.1190/tle44090683.1}
-}
-```
+> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Data-driven analysis of seismic phase using circular statistics. *The Leading Edge*, 44(9), 683–691. https://doi.org/10.1190/tle44090683.1
+>
+> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Code and data for "Data-driven analysis of seismic phase using circular statistics" (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20045225
 
 ---
 
