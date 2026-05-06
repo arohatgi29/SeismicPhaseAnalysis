@@ -2,7 +2,6 @@
 
 [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1a365d)](https://pubs.geoscienceworld.org/seg/tle/article/44/9/683/660917/Data-driven-analysis-of-seismic-phase-using)
 [![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20055837-1682D4?logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20055837)
-[![Version](https://img.shields.io/badge/Version-tle--2025--v1.0.0-blue)](https://doi.org/10.5281/zenodo.20055837)
 [![Code](https://img.shields.io/badge/Code-PDF-2ea44f)](code.pdf)
 [![Pluto](https://img.shields.io/badge/Pluto-Notebook-4063D8?logo=julia&logoColor=white)](notebook.jl)
 [![Language](https://img.shields.io/badge/Julia-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
