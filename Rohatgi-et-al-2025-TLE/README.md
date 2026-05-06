@@ -64,15 +64,13 @@ Pluto.run(notebook="notebook.jl")
 This will open the Pluto notebook in your browser. Any dependencies used in the notebook will be installed automatically by Pluto's built-in package manager.
 
 ---
-
 ## Citing this work
 
 If you use code or data from this repository, please cite both the paper and the archived release:
 
 > Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Data-driven analysis of seismic phase using circular statistics. *The Leading Edge*, 44(9), 683–691. https://doi.org/10.1190/tle44090683.1
 >
-> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Code and data for "Data-driven analysis of seismic phase using circular statistics" (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20045225
-
+> > Rohatgi, A., Bakulin, A., and Fomel, S. (2026). Code and data for "Data-driven analysis of seismic phase using circular statistics" (Version tle-2025-v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20055837
 ---
 
 ## License
