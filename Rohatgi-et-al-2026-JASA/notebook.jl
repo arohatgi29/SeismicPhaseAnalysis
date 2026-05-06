@@ -16,6 +16,9 @@ using SpecialFunctions
 # ╔═╡ df2e462c-20dc-43a7-9b81-1be8245fcc96
 using Distributions
 
+# ╔═╡ b2417731-ce8e-4546-a4b1-a2991ed044f4
+using Printf
+
 # ╔═╡ 27413a40-36df-11f1-3735-f9f362703981
 md"""
 # Amplitude-Invariant Phase Masking for Coherence Recovery in Scattered Wavefields
@@ -65,11 +68,11 @@ end
 md"""
 ## 2. Phase Distortions in Scattered Wavefields
  
-When acoustic or elastic waves propagate through media with small-scale heterogeneities, such as rough interfaces or sub-wavelength inclusions, each scattering event imposes a local phase distortion. The cumulative effect is a frequency-dependent, spatially varying phase perturbation that differs from record to record, decorrelating otherwise coherent recordings.
+When acoustic or elastic waves propagate through media with small-scale heterogeneities, such as rough interfaces or sub-wavelength inclusions, each scattering event imposes a local phase distortion. We consider scalar (acoustic, longitudinal P-wave) propagation, although the formulation applies to any complex-valued narrowband signal regardless of polarization. The synthetic experiments span the 1–80 Hz band typical of land seismic exploration data. The cumulative effect is a frequency-dependent, spatially varying phase perturbation that differs from record to record, decorrelating otherwise coherent recordings.
  
 Scattering-induced phase randomization is the physical origin of speckle⁸, observed across acoustics, radar, ultrasound, and interferometric remote sensing. In the complex signal domain, speckle manifests as multiplicative noise: the observed field is the product of a coherent signal and a random phasor whose phase approaches a uniform distribution under strong scattering. Analogous multiplicative phase distortions have recently been identified in broadband seismic data, where near-surface scattering introduces random, frequency-dependent phase perturbations across recorded signals, manifesting as severe wavelet distortions in the time domain⁹.
  
-Conceptually, a clean spectrum
+CConceptually, a clean recording is described by its complex Fourier spectrum, written in standard polar (magnitude-phase) form
 """
 
 # ╔═╡ 3d3e9271-505e-42e9-9fac-52b54a02c8f4
@@ -81,8 +84,10 @@ A_{\text{clean}}(\omega) = |A_{\text{clean}}(\omega)|\, e^{i\theta_{\text{clean}
 
 # ╔═╡ 5073c1d5-9b7c-4636-8fa1-3c8882ac30b6
 md"""
-acquires a record-dependent phase perturbation ``\delta_k(\omega)``. The perturbations ``\delta_k(\omega)`` are statistically independent across records and frequencies, and frequency-dependent in character. The spectral amplitude ``|A_{\text{clean}}(\omega)|`` remains unchanged; the decorrelation is entirely phase driven.
- 
+where ``\omega`` is angular frequency, ``|A_{\text{clean}}(\omega)|`` is the spectral magnitude of the undistorted recording, and ``\theta_{\text{clean}}(\omega)`` is its phase spectrum.
+
+Under scattering, this clean spectrum acquires a record-dependent phase perturbation ``\Delta\theta_k(\omega)``. The perturbations are statistically independent across both records and frequencies, and frequency-dependent in character. The spectral amplitude ``|A_{\text{clean}}(\omega)|`` remains unchanged; the decorrelation is entirely phase driven.
+
 The perturbed spectrum of the ``k``-th recording in a multichannel seismic ensemble can therefore be written as
 """
 
@@ -109,9 +114,7 @@ A'_k(\omega) = \alpha_k\, |A_{\text{clean}}(\omega)|\, e^{i\theta_k(\omega)}. \q
 
 # ╔═╡ 74b5f360-988d-4f79-a96c-83682a02d2ae
 md"""
-This two-stage synthetic design: phase-only perturbations followed by combined phase and amplitude variability, enables controlled evaluation under idealized (uniform-amplitude) and realistic (variable-amplitude) conditions (Fig. 1d).
- 
-Suppressing these perturbations requires an operator that acts exclusively on the phase component of the spectrum.
+This two-stage synthetic design separates the experiment into (i) phase-only perturbations with uniform amplitudes (Fig 1c) and (ii) the same phase perturbations combined with record-dependent amplitude scaling (Fig 1d). The staged construction is essential because, as shown in Section 3, the two phase-masking estimators are theoretically equivalent in stage (i) and diverge only in stage (ii). Separating the stages therefore isolates the regime in which amplitude bias matters.. Therefore, Suppressing these perturbations requires an operator that acts exclusively on the phase component of the spectrum. 
 """
 
 # ╔═╡ 40c12c7b-18be-4cf5-a42b-0ee57f30281b
@@ -429,7 +432,7 @@ begin
     # 1f — PLS on scaled amplitudes
     p1f = plot_wiggles_va(pls_traces_scaled, t;
                           n_traces=100, step=1, scale=1.5, lw=1.0,
-                          title="(f) Phase masking via local stack (PLS)",
+                          title="(f) Phase masking via local stacking (PLS)",
                           xtick_labels=["0", "5000"])
 
     # 1h — PCM on scaled amplitudes
@@ -529,7 +532,10 @@ md"""
 
 # ╔═╡ 2cca3d97-5696-4fbe-ad34-368cbb4aa0b4
 md"""
-Since normalization precedes averaging, all traces contribute equally regardless of their spectral energy. ``\hat{\theta}_{PCM}(\omega)`` is amplitude-invariant by construction. The circular mean provides a robust estimate of the dominant signal phase direction¹¹.
+Since normalization precedes averaging, all traces contribute equally regardless of their spectral energy. ``\hat{\theta}_{PCM}(\omega)`` is amplitude-invariant by construction. The circular mean provides a robust estimate of the dominant signal phase direction¹².
+
+
+Importantly, Eq. (7) acts only on record phase; it does not modify the spectral magnitudes of the masked records themselves. The mask defined in Eqs. (4)-(5) is a unit-magnitude operator. Therefore, for every record the spectral magnitude ``|A_k(\omega)|`` and consequently the energy across ``n`` records ``\sum_{k=1}^{n} |A_k(\omega)|^2``, is preserved. All changes induced by the mask arise solely from phase conditioning, for both PLS and PCM.
  
 The two estimators are equivalent under uniform amplitudes and systematically diverge as amplitude variability increases. PLS is therefore a limiting case of the general phase-masking framework: its amplitude weighting is harmless when trace energies are approximately equal but introduces a bias toward high-amplitude records otherwise. PCM eliminates this bias by construction, ensuring equal contribution from all traces regardless of spectral energy.
  
@@ -695,6 +701,17 @@ md"""
 ```
 """
 
+# ╔═╡ 248aee48-aeef-4c5c-b8e1-d792c4e393c3
+md"""
+where the semblance ``S`` is computed as
+
+```math
+S = \frac{\sum_{i=1}^{N} \left( \sum_{j=1}^{M} W_{ij} \right)^2}{M \sum_{i=1}^{N} \sum_{j=1}^{M} W_{ij}^2}. \qquad (10)
+```
+
+Here, ``N`` is the number of time samples in the analysis window, ``M`` is the number of records, and ``W_{ij}`` is the amplitude at time sample ``i`` on record ``j``.
+"""
+
 # ╔═╡ 36ea57c3-1ad5-473d-b2c1-15431754b670
 begin
     binw   = 2π/70
@@ -819,15 +836,98 @@ end
 
 # ╔═╡ a506d20f-6b24-476c-9a46-8301c75c4b05
 md"""
-**Table 1.** Phase variance and SNR before and after phase masking using PLS and PCM, evaluated at 5 Hz for phase-perturbed records under uniform and scaled amplitude conditions.
+**Table 1.** Phase variance, semblance, and SNR before and after phase masking using PLS and PCM, evaluated at 5 Hz for phase-perturbed records under uniform and scaled amplitude conditions.
  
-| Case | Method | Phase Variance (5 Hz) Before | Phase Variance (5 Hz) After | SNR Before | SNR After |
-|:-----|:-------|:---:|:---:|:---:|:---:|
-| Uniform amplitudes | PLS | 0.59 | 0.26 | -8.09 | -0.55 |
-| | PCM | 0.59 | 0.26 | -8.09 | -0.56 |
-| Scaled amplitudes | PLS | 0.59 | 0.32 | -9.14 | -3.60 |
-| | PCM | 0.59 | 0.26 | -9.14 | -2.52 |
+| Case | Method | Phase Variance (5 Hz) Before | Phase Variance (5 Hz) After | Semblance Before | Semblance After | SNR(dB) Before | SNR(dB) After |
+|:-----|:-------|:---:|:---:|:---:|:---:|:---:|:---:|
+| Uniform amplitudes | PLS | 0.59 | 0.26 | 0.13 | 0.46 | -8.09 | -0.55 |
+| | PCM | 0.59 | 0.26 | 0.13 | 0.46 | -8.09 | -0.56 |
+| Scaled amplitudes | PLS | 0.59 | 0.32 | 0.10 | 0.30 | -9.14 | -3.60 |
+| | PCM | 0.59 | 0.26 | 0.10 | 0.35 | -9.14 | -2.52 |
 """
+
+# ╔═╡ f727871a-5ee9-46c3-8b3b-5855541ea3d4
+begin
+
+    # ── Semblance function 
+    function calculate_semblance(window)
+        N, M = size(window)
+        numerator   = sum((sum(window[i, j] for j in 1:M))^2 for i in 1:N)
+        denominator = M * sum(sum(window[i, j]^2 for j in 1:M) for i in 1:N)
+        return numerator / denominator
+    end
+
+    # ── Helper: semblance + SNR (linear) + SNR (dB) from a time-domain window
+    function sem_snr(window)
+        sem = calculate_semblance(window)
+        sem_clamped = clamp(sem, 1e-12, 1 - 1e-12)
+        snr    = sem_clamped / (1 - sem_clamped)
+        snr_db = 10 * log10(snr)
+        return sem, snr, snr_db
+    end
+
+
+    # Case 1: Uniform amplitudes 
+    sem_before_u, _, snr_db_before_u       = sem_snr(phase_perturbed_traces[:, idx])
+    sem_after_u_pls, _, snr_db_after_u_pls = sem_snr(pls_traces[:, idx])
+    sem_after_u_pcm, _, snr_db_after_u_pcm = sem_snr(pcm_traces[:, idx])
+
+    var_before_u_pls = round(1 - circ_r(phase_perturbed[f, idx]),       digits=2)
+    var_after_u_pls  = round(1 - circ_r(predicted_phases_ls[f, idx]),   digits=2)
+    var_before_u_pcm = var_before_u_pls
+    var_after_u_pcm  = round(1 - circ_r(predicted_phases_pcm[f, idx]),  digits=2)
+
+    # Case 2: Scaled amplitudes 
+    sem_before_s, _, snr_db_before_s       = sem_snr(scaled_perturbed_traces[:, idx])
+    sem_after_s_pls, _, snr_db_after_s_pls = sem_snr(pls_traces_scaled[:, idx])
+    sem_after_s_pcm, _, snr_db_after_s_pcm = sem_snr(pcm_traces_scaled[:, idx])
+
+    var_before_s_pls = round(1 - circ_r(phase_perturbed_scaled[f, idx]),      digits=2)
+    var_after_s_pls  = round(1 - circ_r(predicted_phases_ls_scaled[f, idx]),  digits=2)
+    var_before_s_pcm = var_before_s_pls
+    var_after_s_pcm  = round(1 - circ_r(predicted_phases_pcm_scaled[f, idx]), digits=2)
+
+    # ── Print table 
+    rd2(x) = round(x, digits=2)
+
+    println("="^110)
+    println("Table 1. Phase variance (5 Hz), Semblance, and SNR (dB) before and after phase masking (PLS & PCM)")
+    println("="^110)
+    @printf("%-20s %-8s | %-10s %-10s | %-10s %-10s | %-10s %-10s\n",
+            "Case", "Method",
+            "Var Bef", "Var Aft",
+            "Sem Bef", "Sem Aft",
+            "SNR Bef", "SNR Aft")
+    println("-"^110)
+
+    @printf("%-20s %-8s | %-10.2f %-10.2f | %-10.2f %-10.2f | %-10.2f %-10.2f\n",
+            "Uniform amplitudes", "PLS",
+            var_before_u_pls, var_after_u_pls,
+            rd2(sem_before_u), rd2(sem_after_u_pls),
+            rd2(snr_db_before_u), rd2(snr_db_after_u_pls))
+
+    @printf("%-20s %-8s | %-10.2f %-10.2f | %-10.2f %-10.2f | %-10.2f %-10.2f\n",
+            "", "PCM",
+            var_before_u_pcm, var_after_u_pcm,
+            rd2(sem_before_u), rd2(sem_after_u_pcm),
+            rd2(snr_db_before_u), rd2(snr_db_after_u_pcm))
+
+    println("-"^110)
+
+    @printf("%-20s %-8s | %-10.2f %-10.2f | %-10.2f %-10.2f | %-10.2f %-10.2f\n",
+            "Scaled amplitudes", "PLS",
+            var_before_s_pls, var_after_s_pls,
+            rd2(sem_before_s), rd2(sem_after_s_pls),
+            rd2(snr_db_before_s), rd2(snr_db_after_s_pls))
+
+    @printf("%-20s %-8s | %-10.2f %-10.2f | %-10.2f %-10.2f | %-10.2f %-10.2f\n",
+            "", "PCM",
+            var_before_s_pcm, var_after_s_pcm,
+            rd2(sem_before_s), rd2(sem_after_s_pcm),
+            rd2(snr_db_before_s), rd2(snr_db_after_s_pcm))
+
+    println("="^110)
+end
 
 # ╔═╡ 63b5c5fb-89aa-40ce-b6ed-7492a8a5e1b1
 md"""
@@ -846,7 +946,7 @@ These results demonstrate that amplitude-phase decoupling is helpful for reliabl
 begin
     n_small = 100
     n_big   = 100_000
-    freq_idx = 1:35
+    freq_idx = 1:29
     f_axis   = positive_freq[freq_idx]
 
     function circ_stats_all_vs_firstN(phase::AbstractMatrix{<:Real}; n::Int=200)
@@ -973,9 +1073,10 @@ md"""
 7. A. Bakulin, D. Neklyudov, and I. Silvestrov, "Seismic time-frequency masking for suppression of seismic speckle noise," Geophysics 88, V371–V385 (2023).
 8. J. W. Goodman, Speckle Phenomena in Optics: Theory and Applications (Roberts and Company, Greenwood Village, CO, 2007).
 9. A. Bakulin, D. Neklyudov, and I. Silvestrov, "Multiplicative random seismic noise caused by small-scale near-surface scattering and its transformation during stacking," Geophysics 87, V419–V435 (2022).
-10. K. V. Mardia and P. E. Jupp, Directional Statistics (Wiley, New York, NY, 2009).
-11. A. Rohatgi, A. Bakulin, and S. Fomel, "Data-driven analysis of seismic phase using circular statistics," The Leading Edge 44, 683–691 (2025).
-12. A. Bakulin, I. Silvestrov, and M. Protasov, "Signal-to-noise ratio computation for challenging land single-sensor seismic data," Geophys. Prospect. 70, 629–638 (2022).
+10. A. V. Oppenheim, R. W. Schafer, and J. R. Buck, Discrete-Time Signal Processing, 2nd ed. (Prentice Hall, Upper Saddle River, NJ, 1999).
+11. K. V. Mardia and P. E. Jupp, Directional Statistics (Wiley, New York, NY, 2009).
+12. A. Rohatgi, A. Bakulin, and S. Fomel, "Data-driven analysis of seismic phase using circular statistics," The Leading Edge 44, 683–691 (2025).
+13. A. Bakulin, I. Silvestrov, and M. Protasov, "Signal-to-noise ratio computation for challenging land single-sensor seismic data," Geophys. Prospect. 70, 629–638 (2022).
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -988,6 +1089,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -1010,7 +1112,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "fa6dc16daadd6fe0ad553667673f0e965b26ee13"
+project_hash = "18a13ca6cfe45caeb687b31c4c9a0793f8e5acf1"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2551,6 +2653,7 @@ version = "1.13.0+0"
 # ╟─4a115cf9-648f-4719-8d87-7d8e4796bdeb
 # ╟─9bcaedf0-c58d-439e-933c-4761439bd1a4
 # ╟─c755f57d-0b71-4e06-81ca-7b64e581d544
+# ╠═248aee48-aeef-4c5c-b8e1-d792c4e393c3
 # ╠═36ea57c3-1ad5-473d-b2c1-15431754b670
 # ╟─0573f916-bbb6-40e6-a6bd-8aea25ff36f1
 # ╟─f8341612-b575-4e9c-bbdb-424c405664c8
@@ -2560,6 +2663,8 @@ version = "1.13.0+0"
 # ╠═07322a04-dfeb-4c12-97e8-b3e993baf352
 # ╠═1948cc93-38ca-4be4-893a-531827b27312
 # ╟─a506d20f-6b24-476c-9a46-8301c75c4b05
+# ╠═b2417731-ce8e-4546-a4b1-a2991ed044f4
+# ╠═f727871a-5ee9-46c3-8b3b-5855541ea3d4
 # ╟─63b5c5fb-89aa-40ce-b6ed-7492a8a5e1b1
 # ╠═e65f1da4-d12b-4979-9b88-f27d9dc1706d
 # ╟─345459f1-d417-4010-bdef-6a7dca1c6767
