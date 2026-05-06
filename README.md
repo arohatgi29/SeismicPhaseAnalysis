@@ -37,7 +37,7 @@ If you use code or data from this repository, please cite both the paper and the
 
 > Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Data-driven analysis of seismic phase using circular statistics. *The Leading Edge*, 44(9), 683–691. https://doi.org/10.1190/tle44090683.1
 >
-> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Code and data for "Data-driven analysis of seismic phase using circular statistics" (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.XXXXXXX
+> Rohatgi, A., Bakulin, A., and Fomel, S. (2025). Code and data for "Data-driven analysis of seismic phase using circular statistics" (v1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20045225
 
 ## License
 
