@@ -12,7 +12,7 @@ A. Rohatgi, A. Bakulin, and S. Fomel — *The Leading Edge*, 44(9), 683–691, 2
 A data-driven workflow for analyzing seismic phase using circular statistics.
 
 [![DOI](https://img.shields.io/badge/DOI-10.1190%2Ftle44090683.1-1a365d?style=flat-square)](https://doi.org/10.1190/tle44090683.1)
-[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20045225-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20045225)
+[![Zenodo](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.20055058-1682D4?style=flat-square&logo=zenodo&logoColor=white)](https://doi.org/10.5281/zenodo.20055058)
 
 Paper 1: [`Rohatgi-et-al-2025-TLE/`](./Rohatgi-et-al-2025-TLE)
 
